@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>F1 Points Comparison B</title>
+    <meta name="description" content="A Comparison of F1 Points scored by drivers in different seasons">
+    <meta name="keywords" content="F1, Formula 1, Points, Chart, Comparison">
+
+
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet"
+        integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
+    <link rel="stylesheet" href="./styleB.css">
+    <script src="https://d3js.org/d3.v5.min.js"></script>
+</head>
+
+<body class="bg-dark text-white">
+
+    <div class="container mt-4">
+        <h1>Points Chart</h1>
+    </div>
+    <div class="container mt-4">
+        <div class="row">
+            <div class="col-1">
+                <div>Drivers</div>
+                <ul id="driver-list" class="list-group">
+                    <div>Loading...</div>
+                </ul>
+
+            </div>
+            <div class="col">
+
+                <nav class="navbar bg-body-tertiary">
+                    <div class="container-fluid">
+                        <a class="navbar-brand year-option current" href="#">2024</a>
+                        <a class="navbar-brand year-option" href="#">2023</a>
+                        <a class="navbar-brand year-option" href="#">2022</a>
+                        <a class="navbar-brand year-option" href="#">2021</a>
+                        <a class="navbar-brand year-option" href="#">2020</a>
+                        <a class="navbar-brand year-option" href="#">2019</a>
+                        <a class="navbar-brand year-option" href="#">2018</a>
+                        <a class="navbar-brand year-option" href="#">2017</a>
+                        <a class="navbar-brand year-option" href="#">2016</a>
+                        <a class="navbar-brand year-option" href="#">2015</a>
+                        <a class="navbar-brand year-option" href="#">2014</a>
+                        <a class="navbar-brand year-option" href="#">2013</a>
+                        <a class="navbar-brand year-option" href="#">2012</a>
+                        <a class="navbar-brand year-option" href="#">2011</a>
+                        <a class="navbar-brand year-option" href="#">2010</a>
+                        <a class="navbar-brand year-option" href="#">2009</a>
+                        <a class="navbar-brand year-option" href="#">2008</a>
+                        <a class="navbar-brand year-option" href="#">2007</a>
+                        <a class="navbar-brand year-option" href="#">2006</a>
+                       
+                    </div>
+                </nav>
+
+                <div id="chart"></div>
+            </div>
+        </div>
+    </div>
+
+        <script src="./scriptB.js"></script>
+        <!-- <script type="module" src="../src/index.js"></script> -->
+</body>
+
+</html>
