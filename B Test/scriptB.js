@@ -14,18 +14,29 @@ async function fetchDriverStandings(year = 2024) {
         console.log("Fetched Data:", data);
         seasonRaces = data.MRData.total;
         console.log("Rounds:", seasonRaces);
+        selectedDrivers = []; // Reset selected drivers
+        drivers = []; // Reset drivers
+        updateChart();
         if (!data || !data.MRData.StandingsTable.StandingsLists.length) {
             console.error("No standings data found.");
             return;
         }
         
-
+ 
         // Extract driver standings
         const standings = data.MRData.StandingsTable.StandingsLists[0].DriverStandings;
         // console.log("Driver standings:", standings);
         updateDriverList(standings);
         selectedDrivers = []; // Reset selected drivers
         // drivers = []; // Reset drivers
+        
+        const responseYear = await fetch(`https://ergast.com/api/f1/${year}.json`);
+        const dataYear = await responseYear.json();
+        const numberOfRaces = dataYear.MRData.total
+        console.log(numberOfRaces);
+        updateXAxis(numberOfRaces)
+        console.log("Fetched Data:", dataYear);
+
     } catch (error) {
         console.error("Error fetching F1 data:", error);
     }
@@ -114,11 +125,7 @@ async function getDriverResults({driverId}, season) {
 // console.log("Driver 1 Results:", resultsDriver1);
 
 
-const ver = [1, 2, 1, 2, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 5, 1, 1, 1, 1, 1, 1, 1];
-const per = [2, 1, 5, 1, 2, 16, 4, 6, 3, 6, 3, 2, 4, 2, 8, 20, 10, 4, 20, 4, 3, 4];
-const ham = [5, 5, 2, 6, 6, 4, 2, 3, 8, 3, 4, 4, 6, 6, 3, 5,20,20,2,8,7,9];
-const alo = [3,3,3,4,3,2,7,2,5,7,9,5,2,9,15,8,6,20,20,3,9,7]
-const lec = []
+
 
 // console.log("variable",ver)
 
@@ -200,11 +207,19 @@ document.querySelectorAll(".year-option").forEach(yearOption => {
         console.log("Selected year:", clickedYear);
         selectedYear = clickedYear; // Update selected year
         this.classList.add("current");
+        showLoadingMessage()
+        clearChart();
         showLoadingMessage();
-          drivers = []; // Reset drivers
         fetchDriverStandings(clickedYear); // Fetch new data
     });
 });
+
+function clearChart() {
+    console.log("Clearing chart...");
+    svg.selectAll(".line").remove();  // Remove previous lines
+    svg.selectAll(".legend").remove(); // Remove legends
+}
+
 
 function showLoadingMessage() {
     const driverList = d3.select("#driver-list");
@@ -277,20 +292,6 @@ const handleDriverSelection = (driverId) => {
 }
 
 
-
-
-// Data for multiple drivers
-
-/* const drivers = {
-    "VER": driverPoints(ver),
-    "PER": driverPoints(per),
-    "HAM": driverPoints(ham),
-    "ALO": driverPoints(alo),
-    "LEC": driverPoints(lec),
-
-
-}; */
-
 // Available colors for different drivers
 const colors = d3.scaleOrdinal(d3.schemeCategory10);
 //----Chart----
@@ -325,6 +326,7 @@ const yScale = d3.scaleLinear().domain([0, 25]).range([height, 0]);
 
 // Add axes
 svg.append("g")
+    .attr("class", "x-axis")
     .attr("transform", `translate(0, ${height})`)
     .call(d3.axisBottom(xScale).ticks(20));
 
@@ -503,4 +505,13 @@ updateChart();
 //     .attr("stroke-width", 2)
 //     .attr("d", lineGenerator);
 
+// Update X-axis based on number of
+const updateXAxis = (numRaces) => {
+    console.log("Updating X-axis with", numRaces)
+    // Update X-axis
+    xScale.domain([0, numRaces]);
+    svg.select(".x-axis")
+        .transition().duration(500)
+        .call(d3.axisBottom(xScale).ticks(numRaces));
+}
 
