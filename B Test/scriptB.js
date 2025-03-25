@@ -8,8 +8,10 @@ let seasonRaces = 24
 
 // Fetch F1 data from API
 async function fetchDriverStandings(year = 2024) {
+    const url = `https://api.jolpi.ca/ergast/f1/${year}/driverStandings.json`;
+    // const url = `https://ergast.com/api/f1/${year}/driverStandings.json`;
     try {
-        const response = await fetch(`https://ergast.com/api/f1/${year}/driverStandings.json`);
+        const response = await fetch(url);
         const data = await response.json();
         console.log("Fetched Data:", data);
         seasonRaces = data.MRData.total;
@@ -60,7 +62,7 @@ const driverPoints = (driver) => {
     // Convert to cumulative points
     console.log("Points:", points.length);
     seasonRaces = points.length
-    return points.map((sum => value => sum += value)(0));
+    return driver.map((sum => value => sum += value)(0));
 };
 
 
@@ -73,7 +75,7 @@ async function getDriverResults({driverId}, season) {
         const response = await fetch(url);
         const data = await response.json();
         
-        console.log("Fetched Data:", data);
+        console.log("Fetched Driver Results Data:", data);
         let eachRace = data.MRData.RaceTable.Races
 /*         eachRace.forEach(result => {
             // console.log("Result:", result.Results[0].position);
@@ -98,10 +100,10 @@ async function getDriverResults({driverId}, season) {
         ) */
 
         for (let i = 0; i < eachRace.length; i++) {
-            let raceResult = Number(eachRace[i].Results[0].position);
+            let raceResult = Number(eachRace[i].Results[0].points);
             let roundNumber = Number(eachRace[i].round); // Convert to zero-based index
         
-            console.log("Round Number:", roundNumber, "Result:", raceResult, "DriverL:", resultsDriver.length);
+            console.log("Round Number:", roundNumber, "Points:", raceResult, "DriverL:", resultsDriver.length);
         
             // Ensure all missing rounds are populated with default value (20)
             for (let j = resultsDriver.length; j <= roundNumber; j++) {
@@ -113,7 +115,7 @@ async function getDriverResults({driverId}, season) {
         }
         
 
-        // console.log(resultsDriver);
+        console.log(resultsDriver);
         // console.log("Driver Points:", driverPoints(resultsDriver));
         return driverPoints(resultsDriver);
     } catch (error) {
@@ -238,57 +240,67 @@ function updateDriverList(standings) {
     driverList.html(""); // Clear previous list
 
     standings.forEach(driver => {
-        const driverId = driver.Driver.driverId;
+        // console.log(driver, driver.Constructors[0].name)
+        const driverId = {
+            driverId : driver.Driver.driverId,
+            givenName : driver.Driver.givenName,
+            familyName : driver.Driver.familyName,
+            team : driver.Constructors[0].name
+        }
         driverList.append("li")
             .attr("class", "list-group-item")
-            .attr("data-driver", driverId)
+            .attr("data-driver", driverId.driverId)
             .text(`${driver.Driver.code}`)
             .on("click", function() {
                 // console.log("Driver selected:", driverId);
                 handleDriverSelection(driverId);
             });
-        drivers.push({
-            driverId: driverId,
-        });
+        drivers.push(driverId);
     });
 }
 console.log("Drivers:", drivers);
 
-const handleDriverSelection = (driverId) => {
+const handleDriverSelection = (driverObj) => {
 
     // const driver = d3.select(this); // Read driver from attribute
     if (!selectedDrivers) selectedDrivers = []; // Ensure it's always an array
 
     // Check if the driver is valid before proceeding
-    console.log("Drivers:", driverId);
+    console.log("Drivers:", driverObj);
 
-    if (!drivers.find(dri => dri.driverId === driverId)) {
-        console.error(`Invalid driver selected: ${driverId}`);
+    if (!drivers.find(dri => dri.driverId === driverObj.driverId)) {
+        console.error(`Invalid driver selected: ${driverObj}`);
         return;
     }
 
     // Toggle selection
-    if (selectedDrivers.includes(driverId)) {
-        console.log("Deselecting driver:", driverId);
-        selectedDrivers = selectedDrivers.filter(d => d !== driverId);
+    if (selectedDrivers.includes(driverObj)) {
+        selectedDrivers = selectedDrivers.filter(d => d !== driverObj);
     } else if (selectedDrivers.length < 2){
-        console.log("Selecting driver:", driverId);
-        selectedDrivers.push(driverId);
+        console.log("Selecting driver:", driverObj);
+        selectedDrivers.push(driverObj);
     }
 
     // Update list styling
     
     d3.selectAll(".list-group-item")
         .classed("selected", function () {
+            // console.log("Element:", this);
+            // console.log(selectedDrivers)
             const elementDriverId = d3.select(this).attr("data-driver");
-            return selectedDrivers.includes(elementDriverId);
+            // console.log("Element Driver ID:", elementDriverId);
+            if (selectedDrivers.length === 1) {
+                return selectedDrivers[0].driverId.includes(elementDriverId);
+            } else if (selectedDrivers.length === 2) {
+                return selectedDrivers[0].driverId.includes(elementDriverId) || selectedDrivers[1].driverId.includes(elementDriverId);
+            }
         });
 
     // Update chart if at least 2 drivers are selected
     if (selectedDrivers.length === 2) {
         updateChart();
     }
-    console.log(`Selected drivers: ${selectedDrivers}`);
+    console.log(selectedDrivers);
 }
 
 
@@ -300,6 +312,7 @@ const colors = d3.scaleOrdinal(d3.schemeCategory10);
 
 // Set up chart dimensions
 const w = Math.min(window.innerWidth * 0.9, 1148); // Scale width based on screen
+// const w = window.innerWidth < 768 ? window.innerWidth - 40 : 800;
 const h = Math.min(window.innerHeight * 0.6, 470); // Adjust height for small screens
 const margin = { top: 20, right: 20, bottom: 50, left: 50 };
 const width = w - margin.left - margin.right;
@@ -375,16 +388,7 @@ svg.append("g")
     .text("Points Difference"); */
 
 // Add gridlines
-/* svg.append("g")
-.attr("class", "grid")    
-.attr("color", "grey")
-.call(d3.axisLeft(yScale).tickSize(-width).tickFormat(""));
 
-svg.append("g")
-    .attr("class", "grid")
-    .attr("color", "grey")
-    .attr("transform", `translate(0, ${height})`)
-    .call(d3.axisBottom(xScale).tickSize(-height).tickFormat("")); */
 
 // Create the driver list
 const driverList = d3.select("#driver-list");
@@ -412,11 +416,11 @@ function updateChart() {
 
     const [driver1, driver2] = selectedDrivers;
     console.log("Selected drivers:", driver1, driver2);
-    console.log(drivers.find(dri => dri.driverId === driver1))
+    console.log(drivers.find(dri => dri.driverId === driver1.driverId))
     // Pass the actual arrays of points, not strings
     const { averagePoints, driver1Diff, driver2Diff } = calculateDifferences(
-        drivers.find(dri => dri.driverId === driver1), 
-        drivers.find(dri => dri.driverId === driver2)
+        drivers.find(dri => dri.driverId === driver1.driverId), 
+        drivers.find(dri => dri.driverId === driver2.driverId)
     );
 }
 
@@ -443,6 +447,7 @@ const updateChartWithData = async (averagePoints, driver1Diff, driver2Diff) => {
     // Remove old lines
     svg.selectAll(".line").remove();
     svg.selectAll(".legend").remove();
+    svg.selectAll(".grid").remove();
 
     // Define line generator
     const lineGenerator = d3.line()
@@ -454,7 +459,7 @@ const updateChartWithData = async (averagePoints, driver1Diff, driver2Diff) => {
         .datum(driver1Diff)
         .attr("class", "line")
         .attr("fill", "none")
-        .attr("stroke", colors(driver1))
+        .attr("stroke", colors(driver1.team))
         .attr("stroke-width", 2)
         .attr("d", lineGenerator);
 
@@ -463,24 +468,43 @@ const updateChartWithData = async (averagePoints, driver1Diff, driver2Diff) => {
         .datum(driver2Diff)
         .attr("class", "line")
         .attr("fill", "none")
-        .attr("stroke", colors(driver2))
+        .attr("stroke", colors(driver2.team))
         .attr("stroke-width", 2)
         .attr("d", lineGenerator);
 
     // Add legend
+    // svg.append("rect")
+    // .attr("x", width - 90)
+    // .attr("y", 8)
+    // .attr("width", 85)
+    // .attr("height", 18)
+    // .attr("fill", "white")
+    // .attr("opacity", 0.7);
+
     svg.append("text")
         .attr("class", "legend")
-        .attr("x", width - 50)
+        .attr("x", width - 80)
         .attr("y", 20)
-        .attr("fill", colors(driver1))
-        .text(`${driver1}`);
+        .attr("fill", colors(driver1.team))
+        .text(`${driver1.familyName}`);
     
     svg.append("text")
         .attr("class", "legend")
-        .attr("x", width - 50)
-        .attr("y", 40)
-        .attr("fill", colors(driver2)) // Match text color with line color
-        .text(`${driver2}`);
+        .attr("x", width - 80)
+        .attr("y", 50)
+        .attr("fill", colors(driver2.team)) // Match text color with line color
+        .text(`${driver2.familyName}`);
+
+        svg.append("g")
+        .attr("class", "grid")    
+        .attr("color", "grey")
+        .call(d3.axisLeft(yScale).tickSize(-width).tickFormat(""));
+        
+        svg.append("g")
+            .attr("class", "grid")
+            .attr("color", "grey")
+            .attr("transform", `translate(0, ${height})`)
+            .call(d3.axisBottom(xScale).tickSize(-height).tickFormat(""));
 }
 
 
