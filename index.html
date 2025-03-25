@@ -23,18 +23,21 @@
     </div>
     <div class="container mt-4">
         <div class="row">
-            <div class="col-1">
+            <div class="col-md-1">
+            <!-- <div class="col-md-2 col-12 text-center"> -->
+
                 <div>Drivers</div>
                 <div>Teams</div>
                 <ul id="driver-list" class="list-group">
-                    <div>Loading...</div>
+                    <div id="loading" class="loader">Loading...</div>
                 </ul>
 
             </div>
-            <div class="col">
-
+            <div class="col-md-11 col-12">
                 <nav class="navbar bg-body-tertiary">
+                <!-- <nav class="navbar navbar-expand-md bg-body-tertiary justify-content-center"> -->
                     <div class="container-fluid">
+                        <a class="navbar-brand year-option" href="#">2025</a>
                         <a class="navbar-brand year-option current" href="#">2024</a>
                         <a class="navbar-brand year-option" href="#">2023</a>
                         <a class="navbar-brand year-option" href="#">2022</a>
@@ -53,12 +56,11 @@
                         <a class="navbar-brand year-option" href="#">2009</a>
                         <a class="navbar-brand year-option" href="#">2008</a>
                         <a class="navbar-brand year-option" href="#">2007</a>
-                        <a class="navbar-brand year-option" href="#">2006</a>
                        
                     </div>
                 </nav>
 
-                <div id="chart"></div>
+                <div id="chart" ></div>
             </div>
         </div>
     </div>
