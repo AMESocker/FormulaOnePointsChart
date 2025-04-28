@@ -1,12 +1,19 @@
-//2023 F1 Points
-
+//F1 Points Chart
+// TODO have x axis be with the chart box
+// TODO have the chart be responsive to screen size
+// TODO create more buffer between y axis label and chart border
 //----Global Variables----
 let selectedYear = 2024; // Default year
 let drivers = [];
 let selectedDrivers = [];
 let seasonRaces = 24
 
+
 // Fetch F1 data from API
+// TODO add function to current year only charts the number of race run with date of races compared to todays date
+// TODO 
+/* TODO Retrieve the height of the target element using JavaScript (e.g., element.getBoundingClientRect().height). 
+Apply the retrieved height to the other element using element.style.height = height + 'px';.  */
 async function fetchDriverStandings(year = 2024) {
     const url = `https://api.jolpi.ca/ergast/f1/${year}/driverStandings.json`;
     // const url = `https://ergast.com/api/f1/${year}/driverStandings.json`;
@@ -32,13 +39,14 @@ async function fetchDriverStandings(year = 2024) {
         selectedDrivers = []; // Reset selected drivers
         // drivers = []; // Reset drivers
         
-        const responseYear = await fetch(`https://ergast.com/api/f1/${year}.json`);
+        const responseYear = await fetch(`https://api.jolpi.ca/ergast/f1/${year}.json`);
+        // const responseYear = await fetch(`https://ergast.com/api/f1/${year}.json`);
         const dataYear = await responseYear.json();
         const numberOfRaces = dataYear.MRData.total
-        console.log(numberOfRaces);
+        console.log("Races Run",dataYear.MRData.RaceTable.Races)
+        console.log(numberOfRaces, dataYear);
         updateXAxis(numberOfRaces)
         console.log("Fetched Data:", dataYear);
-
     } catch (error) {
         console.error("Error fetching F1 data:", error);
     }
@@ -66,48 +74,28 @@ const driverPoints = (driver) => {
 };
 
 
-async function getDriverResults({driverId}, season) {
+/* async function getDriverResults({driverId}, season) {
     let resultsDriver = [0]
     console.log("Fetching results for driver:", driverId, "in season:", season);
-    const url = `https://ergast.com/api/f1/${season}/drivers/${driverId}/results.json`;
-
+    const raceUrl = `https://api.jolpi.ca/ergast/f1/${season}/drivers/${driverId}/results.json`;
+    const sprintUrl = `https://api.jolpi.ca/ergast/f1/${season}/drivers/${driverId}/sprint.json`;
     try {
-        const response = await fetch(url);
+        const response = await fetch(raceUrl);
         const data = await response.json();
         
         console.log("Fetched Driver Results Data:", data);
         let eachRace = data.MRData.RaceTable.Races
-/*         eachRace.forEach(result => {
-            // console.log("Result:", result.Results[0].position);
-            let raceResult = Number(result.Results[0].position);
-            let roundNumber = Number(result.round);
-            console.log("Round Number:", roundNumber,"Result:",raceResult, "DriverL:", resultsDriver.length);
 
-            if(resultsDriver.length == roundNumber){
-                resultsDriver.splice(roundNumber,0, raceResult)
-            } else {
-                resultsDriver.splice(roundNumber,0,20)
-            }
-
-                while (resultsDriver.length <= roundNumber) {
-                    resultsDriver.push(20); // Default value for missing races
-                }
-            
-                // Assign result to correct index
-                resultsDriver[roundNumber] = raceResult;
-
-        }
-        ) */
-
-        for (let i = 0; i < eachRace.length; i++) {
+       for (let i = 0; i < eachRace.length; i++) {
+            // console.log(eachRace[i]);
             let raceResult = Number(eachRace[i].Results[0].points);
-            let roundNumber = Number(eachRace[i].round); // Convert to zero-based index
+            let roundNumber = Number(eachRace[i].round);
         
             console.log("Round Number:", roundNumber, "Points:", raceResult, "DriverL:", resultsDriver.length);
         
             // Ensure all missing rounds are populated with default value (20)
             for (let j = resultsDriver.length; j <= roundNumber; j++) {
-                resultsDriver.push(20);
+                resultsDriver.push(0);
             }
         
             // Assign the actual race result
@@ -121,41 +109,82 @@ async function getDriverResults({driverId}, season) {
     } catch (error) {
         console.error("Error fetching data:", error);
     }
-}
-// getDriverResults("max_verstappen", 2023)
-// getDriverResults("max_verstappen", 2023).then(results => console.log(results));
-// console.log("Driver 1 Results:", resultsDriver1);
+} */
 
-
-
-
-// console.log("variable",ver)
-
-const verPoints = []
-
-// console.log(verPoints)
-
-const perPoints = []
-
-// console.log(perPoints)
+    async function getDriverResults({ driverId }, season) {
+        console.log("Fetching full results for driver:", driverId, "in season:", season);
+    
+        const raceUrl = `https://api.jolpi.ca/ergast/f1/${season}/drivers/${driverId}/results.json`;
+        const sprintUrl = `https://api.jolpi.ca/ergast/f1/${season}/drivers/${driverId}/sprint.json`;
+    
+        const resultsDriver = [0]; // index = round number
+    
+        try {
+            const [raceResponse, sprintResponse] = await Promise.all([
+                fetch(raceUrl),
+                fetch(sprintUrl)
+            ]);
+    
+            if (!raceResponse.ok || !sprintResponse.ok) {
+                throw new Error(`Fetch error: race ${raceResponse.status}, sprint ${sprintResponse.status}`);
+            }
+    
+            const raceData = await raceResponse.json();
+            const sprintData = await sprintResponse.json();
+    
+            const races = raceData.MRData?.RaceTable?.Races || [];
+            const sprints = sprintData.MRData?.RaceTable?.Races || [];
+    
+            // Build a quick lookup for sprint points by round
+            const sprintPointsByRound = new Map();
+            console.log("Sprints:", sprints);
+            for (const sprint of sprints) {
+                const round = Number(sprint.round);
+                const points = Number(sprint.Results[0]?.points || 0);
+                sprintPointsByRound.set(round, points);
+            }
+    
+            // Process full results: main race + sprint per round
+            for (const race of races) {
+                const round = Number(race.round);
+                const racePoints = Number(race.Results[0]?.points || 0);
+                const sprintPoints = sprintPointsByRound.get(round) || 0;
+    
+                while (resultsDriver.length <= round) {
+                    resultsDriver.push(0);
+                }
+    
+                resultsDriver[round] = racePoints + sprintPoints;
+    
+                console.log(`Round ${round}: Main = ${racePoints}, Sprint = ${sprintPoints}, Total = ${resultsDriver[round]}`);
+            }
+    
+            console.log("Final Results with Sprints:", resultsDriver);
+            return driverPoints(resultsDriver);
+        } catch (error) {
+            console.error("Error fetching combined driver results:", error);
+            return null;
+        }
+    }
+    
 
 const calculateDifferences = async (driver1, driver2) => {
     let driver1Points = await getDriverResults(driver1, selectedYear);
     let driver2Points = await getDriverResults(driver2, selectedYear);
    
-    console.log("Driver 1 Points:", driver1Points);
-    console.log("Driver 2 Points:", driver2Points);
+    console.log("D1P:", driver1Points);
+    console.log("D2P:", driver2Points);
    
     const averagePoints = driver1Points.map((points, index) =>
-        Math.round((driver1Points[index] + driver2Points[index]) / 2)
+        Number((driver1Points[index] + driver2Points[index]) / 2)
     );
-
+    console.log("Average Points:", averagePoints);
     const driver1Diff = driver1Points.map((points, index) => points - averagePoints[index]);
     const driver2Diff = driver2Points.map((points, index) => points - averagePoints[index]);
     updateChartWithData(averagePoints, driver1Diff, driver2Diff)
     return { averagePoints, driver1Diff, driver2Diff };
 };
-
+//TODO refactor code to be able to select more than 2 drivers
 /* const calculateDifferences = async (selectedDrivers) => {
     if (selectedDrivers.length < 2) {
         console.error("At least two drivers must be selected.");
@@ -228,9 +257,41 @@ function showLoadingMessage() {
     driverList.html(""); // Clear current list
     driverList.append("div")
         // .attr("class", "list-group-item text-center font-italic")
-        .text("Loading...");
+        // .text("Loading...");
 }
 
+const teamColorScale = d3.scaleOrdinal(d3.schemeCategory10); // or d3.schemeTableau10, etc.
+const teamDriverMap = {}; // Map of team name to base color
+const driverColorMap = {};
+
+function getDriverColor(driver) {
+    const team = driver.team;
+    console.log("Team:", team);
+    // Assign base color to team if not already assigned
+    if (!teamDriverMap[team]) {
+      teamDriverMap[team] = [];
+    }
+  
+    // Add driver to team list if not present
+    if (!teamDriverMap[team].includes(driver.driverId)) {
+      teamDriverMap[team].push(driver.driverId);
+    }
+  
+    if (driverColorMap[driver.driverId]) {
+      return driverColorMap[driver.driverId];
+    }
+  
+    const baseColor = d3.color(teamColorScale(team));
+    const indexInTeam = teamDriverMap[team].indexOf(driver.driverId);
+    const variation = 0.15 * indexInTeam;
+  
+    const colorVariant = d3.hsl(baseColor);
+    colorVariant.l = Math.max(0.3, Math.min(0.8, colorVariant.l - variation)); // Adjust lightness
+    const finalColor = colorVariant.toString();
+  
+    driverColorMap[driver.driverId] = finalColor;
+    return finalColor;
+  }
 
 
 
@@ -425,6 +486,7 @@ function updateChart() {
 }
 
 const updateChartWithData = async (averagePoints, driver1Diff, driver2Diff) => {
+
     const [driver1, driver2] = selectedDrivers;
     console.log(driver1Diff, driver2Diff);
     if (driver1Diff.length === 0 || driver2Diff.length === 0) {
@@ -459,7 +521,7 @@ const updateChartWithData = async (averagePoints, driver1Diff, driver2Diff) => {
         .datum(driver1Diff)
         .attr("class", "line")
         .attr("fill", "none")
-        .attr("stroke", colors(driver1.team))
+        .attr("stroke", getDriverColor(driver1))
         .attr("stroke-width", 2)
         .attr("d", lineGenerator);
 
@@ -468,7 +530,7 @@ const updateChartWithData = async (averagePoints, driver1Diff, driver2Diff) => {
         .datum(driver2Diff)
         .attr("class", "line")
         .attr("fill", "none")
-        .attr("stroke", colors(driver2.team))
+        .attr("stroke", getDriverColor(driver2))
         .attr("stroke-width", 2)
         .attr("d", lineGenerator);
 
@@ -485,14 +547,14 @@ const updateChartWithData = async (averagePoints, driver1Diff, driver2Diff) => {
         .attr("class", "legend")
         .attr("x", width - 80)
         .attr("y", 20)
-        .attr("fill", colors(driver1.team))
+        .attr("fill", getDriverColor(driver1))
         .text(`${driver1.familyName}`);
     
     svg.append("text")
         .attr("class", "legend")
         .attr("x", width - 80)
         .attr("y", 50)
-        .attr("fill", colors(driver2.team)) // Match text color with line color
+        .attr("fill", getDriverColor(driver2)) // Match text color with line color
         .text(`${driver2.familyName}`);
 
         svg.append("g")
