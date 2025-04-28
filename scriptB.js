@@ -74,7 +74,7 @@ const driverPoints = (driver) => {
 };
 
 
-/* async function getDriverResults({driverId}, season) {
+async function getDriverResults({driverId}, season) {
     let resultsDriver = [0]
     console.log("Fetching results for driver:", driverId, "in season:", season);
     const raceUrl = `https://api.jolpi.ca/ergast/f1/${season}/drivers/${driverId}/results.json`;
@@ -109,9 +109,9 @@ const driverPoints = (driver) => {
     } catch (error) {
         console.error("Error fetching data:", error);
     }
-} */
+}
 
-    async function getDriverResults({ driverId }, season) {
+/*     async function getDriverResults({ driverId }, season) {
         console.log("Fetching full results for driver:", driverId, "in season:", season);
     
         const raceUrl = `https://api.jolpi.ca/ergast/f1/${season}/drivers/${driverId}/results.json`;
@@ -165,7 +165,7 @@ const driverPoints = (driver) => {
             console.error("Error fetching combined driver results:", error);
             return null;
         }
-    }
+    } */
     
 
 const calculateDifferences = async (driver1, driver2) => {
