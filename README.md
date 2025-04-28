@@ -1,7 +1,7 @@
 # Formula One Points Chart
 
 ## Overview
-The **Formula One Points Chart** is a data visualization project that utilizes the Ergast API to display and analyze Formula 1 race results and point standings. This project leverages modern web technologies to present interactive and insightful charts.
+The **Formula One Points Chart** is a data visualization project that utilizes the Jolpi API to display and analyze Formula 1 race results and point standings. This project leverages modern web technologies to present interactive and insightful charts.
 
 ## Features
 - Fetches real-time Formula 1 race data using the [Ergast API](http://ergast.com/mrd/).
