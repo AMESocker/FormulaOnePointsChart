@@ -3,7 +3,7 @@
 // TODO have the chart be responsive to screen size
 // TODO create more buffer between y axis label and chart border
 //----Global Variables----
-let selectedYear = 2024; // Default year
+let selectedYear = 2025; // Default year
 let drivers = [];
 let selectedDrivers = [];
 let seasonRaces = 24
@@ -14,7 +14,7 @@ let seasonRaces = 24
 // TODO 
 /* TODO Retrieve the height of the target element using JavaScript (e.g., element.getBoundingClientRect().height). 
 Apply the retrieved height to the other element using element.style.height = height + 'px';.  */
-async function fetchDriverStandings(year = 2024) {
+async function fetchDriverStandings(year = 2025) {
     const url = `https://api.jolpi.ca/ergast/f1/${year}/driverStandings.json`;
     // const url = `https://ergast.com/api/f1/${year}/driverStandings.json`;
     try {
@@ -74,7 +74,7 @@ const driverPoints = (driver) => {
 };
 
 
-async function getDriverResults({driverId}, season) {
+/* async function getDriverResults({driverId}, season) {
     let resultsDriver = [0]
     console.log("Fetching results for driver:", driverId, "in season:", season);
     const raceUrl = `https://api.jolpi.ca/ergast/f1/${season}/drivers/${driverId}/results.json`;
@@ -109,16 +109,15 @@ async function getDriverResults({driverId}, season) {
     } catch (error) {
         console.error("Error fetching data:", error);
     }
-}
+} */
 
-/*     async function getDriverResults({ driverId }, season) {
+    async function getDriverResults({ driverId }, season) {
         console.log("Fetching full results for driver:", driverId, "in season:", season);
     
         const raceUrl = `https://api.jolpi.ca/ergast/f1/${season}/drivers/${driverId}/results.json`;
         const sprintUrl = `https://api.jolpi.ca/ergast/f1/${season}/drivers/${driverId}/sprint.json`;
     
         const resultsDriver = [0]; // index = round number
-    
         try {
             const [raceResponse, sprintResponse] = await Promise.all([
                 fetch(raceUrl),
@@ -131,16 +130,20 @@ async function getDriverResults({driverId}, season) {
     
             const raceData = await raceResponse.json();
             const sprintData = await sprintResponse.json();
-    
+
+            console.log("Fetched Driver Results Data:", raceData, sprintData);
+
             const races = raceData.MRData?.RaceTable?.Races || [];
             const sprints = sprintData.MRData?.RaceTable?.Races || [];
     
             // Build a quick lookup for sprint points by round
             const sprintPointsByRound = new Map();
+
             console.log("Sprints:", sprints);
+            
             for (const sprint of sprints) {
                 const round = Number(sprint.round);
-                const points = Number(sprint.Results[0]?.points || 0);
+                const points = Number(sprint.SprintResults[0]?.points || 0);
                 sprintPointsByRound.set(round, points);
             }
     
@@ -165,7 +168,7 @@ async function getDriverResults({driverId}, season) {
             console.error("Error fetching combined driver results:", error);
             return null;
         }
-    } */
+    }
     
 
 const calculateDifferences = async (driver1, driver2) => {
