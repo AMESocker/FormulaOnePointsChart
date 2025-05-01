@@ -1,7 +1,7 @@
 //F1 Points Chart
 // TODO have x axis be with the chart box
 // TODO have the chart be responsive to screen size
-// TODO create more buffer between y axis label and chart border
+//?Done - create more buffer between y axis label and chart border
 //----Global Variables----
 let selectedYear = 2025; // Default year
 let drivers = [];
@@ -10,7 +10,7 @@ let seasonRaces = 24
 
 
 // Fetch F1 data from API
-// TODO add function to current year only charts the number of race run with date of races compared to todays date
+//?Done - add function to current year only charts the number of race run with date of races compared to todays date
 // TODO 
 /* TODO Retrieve the height of the target element using JavaScript (e.g., element.getBoundingClientRect().height). 
 Apply the retrieved height to the other element using element.style.height = height + 'px';.  */
@@ -43,9 +43,13 @@ async function fetchDriverStandings(year = 2025) {
         // const responseYear = await fetch(`https://ergast.com/api/f1/${year}.json`);
         const dataYear = await responseYear.json();
         const numberOfRaces = dataYear.MRData.total
+        const races = dataYear.MRData.RaceTable.Races
         console.log("Races Run",dataYear.MRData.RaceTable.Races)
         console.log(numberOfRaces, dataYear);
-        updateXAxis(numberOfRaces)
+        const today = new Date();
+        const completedRaces = races.filter(r => new Date(r.date) <= today);
+        console.log("Completed Races:", completedRaces.length);
+        updateXAxis(completedRaces.length)
         console.log("Fetched Data:", dataYear);
     } catch (error) {
         console.error("Error fetching F1 data:", error);
@@ -377,7 +381,7 @@ const colors = d3.scaleOrdinal(d3.schemeCategory10);
 // Set up chart dimensions
 const w = Math.min(window.innerWidth * 0.9, 1148); // Scale width based on screen
 // const w = window.innerWidth < 768 ? window.innerWidth - 40 : 800;
-const h = Math.min(window.innerHeight * 0.6, 470); // Adjust height for small screens
+const h = Math.min(window.innerHeight * 0.9, 470); // Adjust height for small screens
 const margin = { top: 20, right: 20, bottom: 50, left: 50 };
 const width = w - margin.left - margin.right;
 const height = h - margin.top - margin.bottom;
@@ -387,6 +391,9 @@ const svg = d3.select("#chart")
     .append("svg")
     .attr("width", w)
     .attr("height", h)
+    .attr("preserveAspectRatio", "xMinYMin meet")
+    .attr("viewBox", `0 0 ${w} ${h}`)
+    .classed("svg-content-responsive", true)
     .append("g")
     .attr("transform", `translate(${margin.left}, ${margin.top})`);
 
@@ -422,7 +429,7 @@ svg.append("text")
     svg.append("text")
     .attr("transform", "rotate(-90)")
     .attr("x", -height / 2)
-    .attr("y", -40)
+    .attr("y", -30)
     .attr("text-anchor", "middle")
     .attr("fill", "white")
     .text("Points Difference");
@@ -570,6 +577,8 @@ const updateChartWithData = async (averagePoints, driver1Diff, driver2Diff) => {
             .attr("color", "grey")
             .attr("transform", `translate(0, ${height})`)
             .call(d3.axisBottom(xScale).tickSize(-height).tickFormat(""));
+
+
 }
 
 
