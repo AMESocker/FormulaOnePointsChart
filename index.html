@@ -20,6 +20,7 @@
 
     <div class="container mt-4">
         <h1>Points Chart</h1>
+        <!-- <a href="quali.html">Quali</a> -->
     </div>
     <div id="chartContainer"class="container mt-4">
         <div class="row">
@@ -28,7 +29,7 @@
                 <!-- TODO Highlight drivers on default. Able to select teams and updates chart -->
                 <!-- TODO In mobile view make drivers a dropdown list-->
                 <div>Drivers</div>
-                <div>Teams</div>
+                <!-- <div>Teams</div> -->
                 <ul id="driver-list" class="list-group">
                     <div id="loading" class="loader">Loading...</div>
                 </ul>
@@ -61,11 +62,46 @@
                     </div>
                 </nav>
 
-                <div id="chart" ></div>
+                <div id="chart" class="chart-container"></div>
             </div>
         </div>
     </div>
-
+    <section style="padding: 2rem; max-width: 800px; margin: 0 auto; font-family: sans-serif;">
+        <h2 style="font-size: 2rem; margin-bottom: 1rem;">About This Project</h2>
+        <p style="line-height: 1.6;">
+          This interactive chart visualizes Formula 1 driver points across seasons using data from the
+          <a href="https://jolpi.ca" target="_blank" rel="noopener noreferrer">Jolpi.ca F1 API</a>. Built with
+          <strong>D3.js</strong>, it enables users to explore and compare driver performance through engaging data visualization.
+        </p>
+      
+        <p style="line-height: 1.6; margin-top: 1rem;">
+          I developed this project to enhance my skills in data visualization, API integration, and real-time frontend development. It represents my passion for transforming raw data into intuitive, meaningful visuals that help users explore complex information more easily.
+        </p>
+      
+        <p style="line-height: 1.6; margin-top: 1rem;">
+          If you’re looking to build custom dashboards, interactive charts, or API-powered tools, I’m open to freelance opportunities. 
+          <a id="contact" href="mailto:aaronsocher@gmail.com">Get in touch</a>—I’d love to help bring your data to life.
+        </p>
+      
+        <p style="line-height: 1.6; margin-top: 1rem; font-style: italic;">
+          Created by Aaron Socher — Full-Stack Developer focused on frontend clarity and data-driven UX.
+        </p>
+      </section>
+      
+      
+    <div id="tooltip" style="
+    position: absolute;
+    background: #fff;
+    border: 1px solid #ccc;
+    padding: 6px 10px;
+    border-radius: 4px;
+    pointer-events: none;
+    font-size: 14px;
+    box-shadow: 0 0 5px rgba(0,0,0,0.1);
+    opacity: 0;
+    transition: opacity 0.2s ease;">
+  </div>
+  
         <script src="./scriptB.js"></script>
         <!-- <script type="module" src="../src/index.js"></script> -->
         <script>
