@@ -1,6 +1,7 @@
 //F1 Points Chart
+// TODO create a new page for qualifying head to head battles
 // TODO have x axis be with the chart box
-// TODO have the chart be responsive to screen size
+//?Done have the chart be responsive to screen size
 //?Done - create more buffer between y axis label and chart border
 //----Global Variables----
 let selectedYear = 2025; // Default year
@@ -11,7 +12,7 @@ let seasonRaces = 24
 
 // Fetch F1 data from API
 //?Done - add function to current year only charts the number of race run with date of races compared to todays date
-// TODO 
+// TODO - chat height the same as the side column
 /* TODO Retrieve the height of the target element using JavaScript (e.g., element.getBoundingClientRect().height). 
 Apply the retrieved height to the other element using element.style.height = height + 'px';.  */
 async function fetchDriverStandings(year = 2025) {
@@ -480,6 +481,10 @@ const lineGenerator = d3.line()
 
 // Function to update chart based on selected drivers
 function updateChart() {
+    svg.selectAll(".line").remove();
+    svg.selectAll(".legend").remove();
+    svg.selectAll(".grid").remove();
+
     if (selectedDrivers.length !== 2) {
         console.warn("Please select exactly two drivers to compare.");
         return;
