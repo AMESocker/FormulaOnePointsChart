@@ -1,6 +1,6 @@
 //F1 Points Chart
 // TODO create a new page for qualifying head to head battles
-// TODO have x axis be with the chart box
+//?Done have x axis be with the chart box
 //?Done have the chart be responsive to screen size
 //?Done - create more buffer between y axis label and chart border
 //----Global Variables----
@@ -21,9 +21,13 @@ async function fetchDriverStandings(year = 2025) {
     try {
         const response = await fetch(url);
         const data = await response.json();
+
         console.log("Fetched Data:", data);
+
         seasonRaces = data.MRData.total;
+
         console.log("Rounds:", seasonRaces);
+
         selectedDrivers = []; // Reset selected drivers
         drivers = []; // Reset drivers
         updateChart();
@@ -176,7 +180,7 @@ const driverPoints = (driver) => {
     }
     
 
-const calculateDifferences = async (driver1, driver2) => {
+/* const calculateDifferences = async (driver1, driver2) => {
     let driver1Points = await getDriverResults(driver1, selectedYear);
     let driver2Points = await getDriverResults(driver2, selectedYear);
    
@@ -191,39 +195,55 @@ const calculateDifferences = async (driver1, driver2) => {
     const driver2Diff = driver2Points.map((points, index) => points - averagePoints[index]);
     updateChartWithData(averagePoints, driver1Diff, driver2Diff)
     return { averagePoints, driver1Diff, driver2Diff };
-};
-//TODO refactor code to be able to select more than 2 drivers
-/* const calculateDifferences = async (selectedDrivers) => {
-    if (selectedDrivers.length < 2) {
-        console.error("At least two drivers must be selected.");
-        return;
-    }
-
-    // Fetch points for all selected drivers
-    let allDriverPoints = await Promise.all(
-        selectedDrivers.map(driver => getDriverResults(driver, selectedYear))
-    );
-
-    console.log("All Drivers' Points:", allDriverPoints);
-
-    // Calculate average points per race
-    let numRaces = allDriverPoints[0].length; // Assuming all drivers have the same number of races
-    let averagePoints = Array(numRaces).fill(0).map((_, raceIndex) => {
-        let sum = allDriverPoints.reduce((acc, points) => acc + points[raceIndex], 0);
-        return Math.round(sum / selectedDrivers.length);
-    });
-
-    // Calculate differences from the average for each driver
-    let driversDiffs = selectedDrivers.map((driver, driverIndex) => ({
-        driverId: driver,
-        differences: allDriverPoints[driverIndex].map((points, index) => points - averagePoints[index])
-    }));
-
-    // Update chart (modify function to handle multiple drivers)
-    updateChartWithData(averagePoints, driversDiffs);
-
-    return { averagePoints, driversDiffs };
 }; */
+//TODO refactor code to be able to select more than 2 drivers
+const calculateDifferences = async (drivers) => {
+    console.log("Calculating differences for drivers:", drivers);
+    try {
+        // Fetch points for all drivers
+        const pointsPromises = drivers.map(driver => getDriverResults(driver, selectedYear));
+        const allDriverPoints = await Promise.all(pointsPromises);
+
+        // Log the points for debugging
+        allDriverPoints.forEach((points, index) => {
+            console.log(`D${index + 1}P:`, points);
+        });
+
+        // Ensure all drivers have the same number of results
+        const pointsLength = allDriverPoints[0].length;
+        if (allDriverPoints.some(points => points.length !== pointsLength)) {
+            throw new Error("Mismatch in number of results between drivers.");
+        }
+
+        // Calculate average points for all drivers
+        const averagePoints = allDriverPoints[0].map((_, index) => {
+            const sum = allDriverPoints.reduce((acc, points) => acc + points[index], 0);
+            return sum / allDriverPoints.length;
+        });
+
+        console.log("Average Points:", averagePoints);
+
+        // Calculate the differences from the average for each driver
+        const differences = allDriverPoints.map((driverPoints, driverIndex) => {
+            return driverPoints.map((points, index) => points - averagePoints[index]);
+        });
+
+        // Update the chart with the calculated data
+        updateChartWithData(averagePoints, ...differences);
+
+        // Return the results for each driver
+        const driverDiffs = drivers.map((driver, index) => ({
+            driver,
+            averagePoints,
+            diff: differences[index]
+        }));
+
+        return driverDiffs;
+    } catch (error) {
+        // Log any errors that occur during the process
+        console.error("Error calculating differences:", error);
+    }
+};
 
 
 // const { averagePoints, driver1Diff, driver2Diff } = calculateDifferences(driverPoints(ver), driverPoints(per));
@@ -335,7 +355,7 @@ const handleDriverSelection = (driverObj) => {
     if (!selectedDrivers) selectedDrivers = []; // Ensure it's always an array
 
     // Check if the driver is valid before proceeding
-    console.log("Drivers:", driverObj);
+    // console.log("Drivers:", driverObj);
 
     if (!drivers.find(dri => dri.driverId === driverObj.driverId)) {
         console.error(`Invalid driver selected: ${driverObj}`);
@@ -345,28 +365,19 @@ const handleDriverSelection = (driverObj) => {
     // Toggle selection
     if (selectedDrivers.includes(driverObj)) {
         selectedDrivers = selectedDrivers.filter(d => d !== driverObj);
-    } else if (selectedDrivers.length < 2){
+    } else if (selectedDrivers.length < 10){
         console.log("Selecting driver:", driverObj);
         selectedDrivers.push(driverObj);
     }
 
-    // Update list styling
-    
     d3.selectAll(".list-group-item")
         .classed("selected", function () {
-            // console.log("Element:", this);
-            // console.log(selectedDrivers)
             const elementDriverId = d3.select(this).attr("data-driver");
-            // console.log("Element Driver ID:", elementDriverId);
-            if (selectedDrivers.length === 1) {
-                return selectedDrivers[0].driverId.includes(elementDriverId);
-            } else if (selectedDrivers.length === 2) {
-                return selectedDrivers[0].driverId.includes(elementDriverId) || selectedDrivers[1].driverId.includes(elementDriverId);
-            }
+            return selectedDrivers.some(d => d.driverId.includes(elementDriverId));
         });
 
     // Update chart if at least 2 drivers are selected
-    if (selectedDrivers.length === 2) {
+    if (selectedDrivers.length >= 2) {
         updateChart();
     }
     console.log(selectedDrivers);
@@ -485,33 +496,33 @@ function updateChart() {
     svg.selectAll(".legend").remove();
     svg.selectAll(".grid").remove();
 
-    if (selectedDrivers.length !== 2) {
+ /*    if (selectedDrivers.length !== 2) {
         console.warn("Please select exactly two drivers to compare.");
         return;
-    }
+    } */
 
     const [driver1, driver2] = selectedDrivers;
     console.log("Selected drivers:", driver1, driver2);
     console.log(drivers.find(dri => dri.driverId === driver1.driverId))
     // Pass the actual arrays of points, not strings
-    const { averagePoints, driver1Diff, driver2Diff } = calculateDifferences(
+    calculateDifferences(selectedDrivers)
+/*     const { averagePoints, driver1Diff, driver2Diff } = calculateDifferences(
         drivers.find(dri => dri.driverId === driver1.driverId), 
         drivers.find(dri => dri.driverId === driver2.driverId)
-    );
+    ); */
 }
 
-const updateChartWithData = async (averagePoints, driver1Diff, driver2Diff) => {
+const updateChartWithData = async (averagePoints, ...driversDiffs) => {
 
-    const [driver1, driver2] = selectedDrivers;
-    console.log(driver1Diff, driver2Diff);
-    if (driver1Diff.length === 0 || driver2Diff.length === 0) {
-        console.warn("No data available to calculate differences.");
+    if (!selectedDrivers || selectedDrivers.length === 0 || driversDiffs.some(diff => diff.length === 0)) {
+        console.warn("Insufficient data to update chart.");
         return;
     }
 
-    // Determine new Y-axis range
-    const minY = Math.min(...driver1Diff, ...driver2Diff);
-    const maxY = Math.max(...driver1Diff, ...driver2Diff);
+    // Determine Y-axis range
+    const allDiffs = driversDiffs.flat();
+    const minY = Math.min(...allDiffs);
+    const maxY = Math.max(...allDiffs);
 
     // Update yScale domain with padding
     yScale.domain([minY - 10, maxY + 10]);
@@ -531,46 +542,22 @@ const updateChartWithData = async (averagePoints, driver1Diff, driver2Diff) => {
         .x((d, i) => xScale(i))
         .y(d => yScale(d));
 
-    // Draw driver1 line
-    svg.append("path")
-        .datum(driver1Diff)
-        .attr("class", "line")
-        .attr("fill", "none")
-        .attr("stroke", getDriverColor(driver1))
-        .attr("stroke-width", 2)
-        .attr("d", lineGenerator);
-
-    // Draw driver2 line
-    svg.append("path")
-        .datum(driver2Diff)
-        .attr("class", "line")
-        .attr("fill", "none")
-        .attr("stroke", getDriverColor(driver2))
-        .attr("stroke-width", 2)
-        .attr("d", lineGenerator);
-
-    // Add legend
-    // svg.append("rect")
-    // .attr("x", width - 90)
-    // .attr("y", 8)
-    // .attr("width", 85)
-    // .attr("height", 18)
-    // .attr("fill", "white")
-    // .attr("opacity", 0.7);
-
-    svg.append("text")
-        .attr("class", "legend")
-        .attr("x", width - 80)
-        .attr("y", 20)
-        .attr("fill", getDriverColor(driver1))
-        .text(`${driver1.familyName}`);
+        selectedDrivers.forEach((driver, i) => {
+            svg.append("path")
+                .datum(driversDiffs[i])
+                .attr("class", "line")
+                .attr("fill", "none")
+                .attr("stroke", getDriverColor(driver))
+                .attr("stroke-width", 2)
+                .attr("d", lineGenerator);
     
-    svg.append("text")
-        .attr("class", "legend")
-        .attr("x", width - 80)
-        .attr("y", 50)
-        .attr("fill", getDriverColor(driver2)) // Match text color with line color
-        .text(`${driver2.familyName}`);
+            svg.append("text")
+                .attr("class", "legend")
+                .attr("x", width - 80)
+                .attr("y", 20 + i * 30)
+                .attr("fill", getDriverColor(driver))
+                .text(`${driver.familyName}`);
+        });
 
         svg.append("g")
         .attr("class", "grid")    
