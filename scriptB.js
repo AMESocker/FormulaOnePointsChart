@@ -525,7 +525,7 @@ const updateChartWithData = async (averagePoints, ...driversDiffs) => {
     const maxY = Math.max(...allDiffs);
 
     // Update yScale domain with padding
-    yScale.domain([minY - 10, maxY + 10]);
+    yScale.domain([minY - 5, maxY + 5]);
 
     // Update Y-axis
     svg.select(".y-axis")
@@ -548,12 +548,12 @@ const updateChartWithData = async (averagePoints, ...driversDiffs) => {
                 .attr("class", "line")
                 .attr("fill", "none")
                 .attr("stroke", getDriverColor(driver))
-                .attr("stroke-width", 2)
+                .attr("stroke-width", 4)
                 .attr("d", lineGenerator);
     
             svg.append("text")
                 .attr("class", "legend")
-                .attr("x", width - 80)
+                .attr("x", width - 1030)
                 .attr("y", 20 + i * 30)
                 .attr("fill", getDriverColor(driver))
                 .text(`${driver.familyName}`);
