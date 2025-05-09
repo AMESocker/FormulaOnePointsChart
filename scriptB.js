@@ -1,5 +1,6 @@
 //F1 Points Chart
 // TODO create a new page for qualifying head to head battles
+// TODO add "W" labels for wins
 //?Done have x axis be with the chart box
 //?Done have the chart be responsive to screen size
 //?Done - create more buffer between y axis label and chart border
@@ -365,7 +366,7 @@ const handleDriverSelection = (driverObj) => {
     // Toggle selection
     if (selectedDrivers.includes(driverObj)) {
         selectedDrivers = selectedDrivers.filter(d => d !== driverObj);
-    } else if (selectedDrivers.length < 10){
+    } else if (selectedDrivers.length < 8){
         console.log("Selecting driver:", driverObj);
         selectedDrivers.push(driverObj);
     }
@@ -553,8 +554,8 @@ const updateChartWithData = async (averagePoints, ...driversDiffs) => {
     
             svg.append("text")
                 .attr("class", "legend")
-                .attr("x", width - 1030)
-                .attr("y", 20 + i * 30)
+                .attr("x", 0 + 10)
+                .attr("y", 20 + i * 25)
                 .attr("fill", getDriverColor(driver))
                 .text(`${driver.familyName}`);
         });
