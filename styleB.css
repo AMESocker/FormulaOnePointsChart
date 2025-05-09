@@ -152,18 +152,18 @@ text.legend {
     flex-grow: 1;
     text-align: center;
   }
-/* list item transformation */
-   /* #driver-list {
+/* /* /* list item transformation */
+   #driver-list {
         display: flex;
         flex-direction: row;
-        gap: 1px; Adjust spacing between items
+        /* gap: 4px;  */
         padding: 0;
     }
 
     #driver-list .list-group-item {
-        writing-mode: vertical-rl;
-        transform: rotate(180deg); Ensures text is properly aligned
-        text-align: center;
-        min-width: 0px; Adjust based on your design
-    } */
+        /* writing-mode: vertical-rl; */
+        /* transform: rotate(180deg);  */
+        /* text-align: center; */
+        min-width: 20px;
+    } 
 }
