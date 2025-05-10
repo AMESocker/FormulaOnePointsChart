@@ -14,15 +14,19 @@
         integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
     <link rel="stylesheet" href="./styleB.css">
     <script src="https://d3js.org/d3.v5.min.js"></script>
+    <!-- Google AdSense -->
+    <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-6459990223030241"
+     crossorigin="anonymous"></script>
 </head>
 
 <body class="bg-dark text-white">
 
-    <div class="container mt-4">
+    <header class="container mt-4">
         <h1>Points Chart</h1>
-        <!-- <a href="quali.html">Quali</a> -->
-    </div>
-    <div id="chartContainer"class="container mt-4">
+        <!-- <a class="navbar-brand" href="champions.html">Champions</a> -->
+        <!-- <a class="navbar-brand" href="quali.html">Quali</a> -->
+    </header>
+    <main id="chartContainer"class="container mt-4">
         <div class="row">
             <div id="tower" class="col-md-1">
             <!-- <div class="col-md-2 col-12 text-center"> -->
@@ -45,7 +49,7 @@
                        <a class="navbar-brand year-option" href="#">2022</a>
                         <a class="navbar-brand year-option" href="#">2021</a>
                         <a class="navbar-brand year-option" href="#">2020</a>
-                <!--    <a class="navbar-brand year-option" href="#">2019</a>
+<!--                    <a class="navbar-brand year-option" href="#">2019</a>
                         <a class="navbar-brand year-option" href="#">2018</a>
                         <a class="navbar-brand year-option" href="#">2017</a>
                         <a class="navbar-brand year-option" href="#">2016</a>
@@ -65,7 +69,7 @@
                 <div id="chart" class="chart-container"></div>
             </div>
         </div>
-    </div>
+    </main>
     <section style="padding: 2rem; max-width: 800px; margin: 0 auto; font-family: sans-serif;">
         <h2 style="font-size: 2rem; margin-bottom: 1rem;">About This Project</h2>
         <p style="line-height: 1.6;">
@@ -83,9 +87,12 @@
           <a id="contact" href="mailto:aaronsocher@gmail.com">Get in touch</a>—I’d love to help bring your data to life.
         </p>
       
-        <p style="line-height: 1.6; margin-top: 1rem; font-style: italic;">
-          Created by Aaron Socher — Full-Stack Developer focused on frontend clarity and data-driven UX.
-        </p>
+        <footer>
+          <p style="line-height: 1.6; margin-top: 1rem; font-style: italic;">
+            Created by Aaron Socher — Full-Stack Developer focused on frontend clarity and data-driven UX.
+          </p>
+
+        </footer>
       </section>
       
       
@@ -105,9 +112,23 @@
         <script src="./scriptB.js"></script>
         <!-- <script type="module" src="../src/index.js"></script> -->
         <script>
-            window.va = window.va || function () { (window.vaq = window.vaq || []).push(arguments); };
-          </script>
-          <script defer src="/_vercel/insights/script.js"></script>
+          window.va = window.va || function () { (window.vaq = window.vaq || []).push(arguments); };
+        </script>
+        <script defer src="/_vercel/insights/script.js"></script>
+
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "WebSite",
+  "name": "F1 Points Comparison",
+  "url": "https://formulaonepointschart.vercel.app/",
+  "description": "A Comparison of F1 Points scored by drivers in different seasons"
+    "creator": {
+    "@type": "Person",
+    "name": "Aaron Socher"
+  }
+}
+</script>
 </body>
 
 </html>
