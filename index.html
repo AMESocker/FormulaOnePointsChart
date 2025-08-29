@@ -2,60 +2,60 @@
 <html lang="en">
 
 <head>
-    <meta charset="UTF-8">
-    <meta http-equiv="X-UA-Compatible" content="IE=edge">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>F1 Points Comparison</title>
-    <meta name="description" content="A Comparison of F1 Points scored by drivers in different seasons">
-    <meta name="keywords" content="F1, Formula 1, Points, Chart, Comparison">
+  <meta charset="UTF-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>F1 Points Comparison</title>
+  <meta name="description" content="A Comparison of F1 Points scored by drivers in different seasons">
+  <meta name="keywords" content="F1, Formula 1, Points, Chart, Comparison">
 
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
 
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet"
-        integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
-    <link rel="stylesheet" href="./style.css">
-    <script src="https://d3js.org/d3.v5.min.js"></script>
-    <!-- Google AdSense -->
-    <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-6459990223030241"
-     crossorigin="anonymous"></script>
-     <meta name="google-adsense-account" content="ca-pub-6459990223030241">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet"
+    integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
+  <link rel="stylesheet" href="./style.css">
+  <script src="https://d3js.org/d3.v5.min.js"></script>
+  <!-- Google AdSense -->
+  <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-6459990223030241"
+    crossorigin="anonymous"></script>
+  <meta name="google-adsense-account" content="ca-pub-6459990223030241">
 </head>
 
 <body class="bg-dark text-white">
 
-    <header class="container mt-4">
-        <h1>F1 Points Comparison</h1>
-        <!-- <a class="navbar-brand" href="champions.html">Champions</a> -->
-        <!-- <a class="navbar-brand" href="quali.html">Quali</a> -->
-    </header>
-    <main id="chartContainer"class="container mt-4">
-        <div class="row">
-            <div id="tower" class="col-md-1">
-            <!-- <div class="col-md-2 col-12 text-center"> -->
-                <!-- TODO Highlight drivers on default. Able to select teams and updates chart -->
-                <!-- TODO In mobile view make drivers a dropdown list-->
-                <!-- <div>Drivers</div>
+  <header class="container mt-4">
+    <h1>F1 Points Comparison</h1>
+    <!-- <a class="navbar-brand" href="champions.html">Champions</a> -->
+    <!-- <a class="navbar-brand" href="quali.html">Quali</a> -->
+  </header>
+  <main id="chartContainer" class="container mt-4">
+    <!-- <div class="row"> -->
+      <div id="tower" class="col-md-1">
+        <!-- <div class="col-md-2 col-12 text-center"> -->
+        <!-- TODO Highlight drivers on default. Able to select teams and updates chart -->
+        <!-- TODO In mobile view make drivers a dropdown list-->
+        <!-- <div>Drivers</div>
                 <div>Teams</div> -->
-                <div class="mb-3">
-                  <button id="show-drivers" class="btn btn-sm btn-outline-light me-2 active">Drivers</button>
-                  <button id="show-teams" class="btn btn-sm btn-outline-light">Teams</button>
-                </div>
-                <ul id="driver-list" class="list-group">
-                    <div id="loading" class="loader">Loading...</div>
-                </ul>
+        <div class="mb-3">
+          <button id="show-drivers" class="btn btn-sm btn-outline-light me-2 active">Drivers</button>
+          <button id="show-teams" class="btn btn-sm btn-outline-light">Teams</button>
+        </div>
+        <ul id="driver-list" class="list-group">
+          <div id="loading" class="loader">Loading...</div>
+        </ul>
 
-            </div>
-            <div class="col-md-11 col-12">
-                <nav class="navbar bg-body-tertiary">
-                <!-- <nav class="navbar navbar-expand-md bg-body-tertiary justify-content-center"> -->
-                    <div class="container-fluid">
-                        <a class="navbar-brand year-option current" href="#">2025</a>
-                        <a class="navbar-brand year-option " href="#">2024</a>
-                        <a class="navbar-brand year-option" href="#">2023</a>
-                       <a class="navbar-brand year-option" href="#">2022</a>
-                        <a class="navbar-brand year-option" href="#">2021</a>
-                        <a class="navbar-brand year-option" href="#">2020</a>
-<!--                    <a class="navbar-brand year-option" href="#">2019</a>
+      </div>
+      <div class="col-md-11 col-12">
+        <nav class="navbar bg-body-tertiary">
+          <!-- <nav class="navbar navbar-expand-md bg-body-tertiary justify-content-center"> -->
+          <div class="container-fluid">
+            <a class="navbar-brand year-option current" href="#">2025</a>
+            <a class="navbar-brand year-option " href="#">2024</a>
+            <a class="navbar-brand year-option" href="#">2023</a>
+            <a class="navbar-brand year-option" href="#">2022</a>
+            <a class="navbar-brand year-option" href="#">2021</a>
+            <a class="navbar-brand year-option" href="#">2020</a>
+            <!--                    <a class="navbar-brand year-option" href="#">2019</a>
                         <a class="navbar-brand year-option" href="#">2018</a>
                         <a class="navbar-brand year-option" href="#">2017</a>
                         <a class="navbar-brand year-option" href="#">2016</a>
@@ -68,41 +68,45 @@
                         <a class="navbar-brand year-option" href="#">2009</a>
                         <a class="navbar-brand year-option" href="#">2008</a>
                         <a class="navbar-brand year-option" href="#">2007</a> -->
-                       
-                    </div>
-                </nav>
 
-                <div id="chart" class="chart-container"></div>
-            </div>
-        </div>
-    </main>
-    <section style="padding: 2rem; max-width: 800px; margin: 0 auto; font-family: sans-serif;">
-        <h2 style="font-size: 2rem; margin-bottom: 1rem;">About This Project</h2>
-        <p style="line-height: 1.6;">
-          This interactive chart visualizes Formula 1 driver points across seasons using data from the
-          <a href="https://api.jolpi.ca/ergast/" target="_blank" rel="noopener noreferrer">Ergast F1 API</a>. Built with
-          <strong>D3.js</strong>, it enables users to explore and compare driver performance through engaging data visualization.
-        </p>
-      
-        <p style="line-height: 1.6; margin-top: 1rem;">
-          I developed this project to enhance my skills in data visualization, API integration, and real-time frontend development. It represents my passion for transforming raw data into intuitive, meaningful visuals that help users explore complex information more easily.
-        </p>
-      
-        <p style="line-height: 1.6; margin-top: 1rem;">
-          If you’re looking to build custom dashboards, interactive charts, or API-powered tools, I’m open to freelance opportunities. 
-          <a id="contact" href="mailto:aaronsocher@gmail.com">Get in touch</a>—I’d love to help bring your data to life.
-        </p>
-      
-        <footer>
-          <p style="line-height: 1.6; margin-top: 1rem; font-style: italic;">
-            Created by Aaron Socher — Full-Stack Developer focused on frontend clarity and data-driven UX.
-          </p>
+          </div>
+        </nav>
 
-        </footer>
-      </section>
-      
-      
-    <div id="tooltip" style="
+        <div id="chart" class="chart-container"></div>
+      </div>
+    <!-- </div> -->
+  </main>
+  <section style="padding: 2rem; max-width: 800px; margin: 0 auto; font-family: sans-serif;">
+    <h2 style="font-size: 2rem; margin-bottom: 1rem;">About This Project</h2>
+    <p style="line-height: 1.6;">
+      This interactive chart visualizes Formula 1 driver points across seasons using data from the
+      <a href="https://api.jolpi.ca/ergast/" target="_blank" rel="noopener noreferrer">Ergast F1 API</a>. Built with
+      <strong>D3.js</strong>, it enables users to explore and compare driver performance through engaging data
+      visualization.
+    </p>
+
+    <p style="line-height: 1.6; margin-top: 1rem;">
+      I developed this project to enhance my skills in data visualization, API integration, and real-time frontend
+      development. It represents my passion for transforming raw data into intuitive, meaningful visuals that help users
+      explore complex information more easily.
+    </p>
+
+    <p style="line-height: 1.6; margin-top: 1rem;">
+      If you’re looking to build custom dashboards, interactive charts, or API-powered tools, I’m open to freelance
+      opportunities.
+      <a id="contact" href="mailto:aaronsocher@gmail.com">Get in touch</a>—I’d love to help bring your data to life.
+    </p>
+
+    <footer>
+      <p style="line-height: 1.6; margin-top: 1rem; font-style: italic;">
+        Created by Aaron Socher — Full-Stack Developer focused on frontend clarity and data-driven UX.
+      </p>
+
+    </footer>
+  </section>
+
+
+  <div id="tooltip" style="
     position: absolute;
     background: #fff;
     border: 1px solid #ccc;
@@ -114,21 +118,21 @@
     opacity: 0;
     transition: opacity 0.2s ease;">
   </div>
-  
-        <script src="./script.js"></script>
-        <!-- <script type="module" src="../src/index.js"></script> -->
-        <script>
-          window.va = window.va || function () { (window.vaq = window.vaq || []).push(arguments); };
-        </script>
-        <script defer src="/_vercel/insights/script.js"></script>
 
-<script type="application/ld+json">
+  <script type="module" src="./script.js"></script>
+  <!-- <script type="module" src="../src/index.js"></script> -->
+  <script>
+    window.va = window.va || function () { (window.vaq = window.vaq || []).push(arguments); };
+  </script>
+  <script defer src="/_vercel/insights/script.js"></script>
+
+  <script type="application/ld+json">
 {
   "@context": "https://schema.org",
   "@type": "WebSite",
   "name": "F1 Points Comparison",
   "url": "https://formulaonepointschart.vercel.app/",
-  "description": "A Comparison of F1 Points scored by drivers in different seasons"
+  "description": "A Comparison of F1 Points scored by drivers in different seasons",
     "creator": {
     "@type": "Person",
     "name": "Aaron Socher"
