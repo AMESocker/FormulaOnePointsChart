@@ -1,14 +1,17 @@
 //F1 Points Chart
+
 // TODO create a new page for qualifying head to head battles
 // TODO add "W" labels for wins
 //?Done have x axis be with the chart box
 //?Done have the chart be responsive to screen size
 //?Done - create more buffer between y axis label and chart border
 //----Global Variables----
-let selectedYear = 2025; // Default year
-let selectedView = 'drivers'; // Default view
+export let selectedYear = 2025; // Default year
+export let selectedView = 'drivers'; // Default view
 let drivers = [];
 let selectedDrivers = [];
+let teams = [];
+let selectedTeams = [];
 let seasonRaces = 24
 
 
@@ -17,10 +20,46 @@ let seasonRaces = 24
 // TODO - chat height the same as the side column
 /* TODO Retrieve the height of the target element using JavaScript (e.g., element.getBoundingClientRect().height). 
 Apply the retrieved height to the other element using element.style.height = height + 'px';.  */
+
+import { getDriverStandings, getSeasonDetails, getRaceWinners } from './api.js';
+import { extractStandings, getCompletedRaces } from './helpers.js';
+
 async function fetchDriverStandings(year = 2025) {
-    const url = `https://api.jolpi.ca/ergast/f1/${year}/driverStandings.json`;
-    // const url = `https://ergast.com/api/f1/${year}/driverStandings.json`;
     try {
+        // Fetch driver standings
+        const standingsData = await getDriverStandings(year);
+        const standings = extractStandings(standingsData);
+
+        // Reset state
+        selectedDrivers = [];
+        drivers = [];
+
+        if (standings.length === 0) {
+            console.error("No standings data found.");
+            return;
+        }
+
+        updateDriverList(standings);
+        if (selectedDrivers.length >= 2) {
+            updateChart();
+        }
+
+        // Fetch season details
+        const seasonData = await getSeasonDetails(year);
+        const completedRaces = getCompletedRaces(seasonData);
+        console.log("Completed Races:", completedRaces.length);
+        updateXAxis(completedRaces.length);
+
+    } catch (error) {
+        console.error("Error fetching F1 data:", error);
+    }
+}
+
+/* async function fetchDriverStandings1(year = 2025) {
+    try {
+
+
+
         const response = await fetch(url);
         const data = await response.json();
 
@@ -61,18 +100,19 @@ async function fetchDriverStandings(year = 2025) {
     } catch (error) {
         console.error("Error fetching F1 data:", error);
     }
-}
+} */
+
 async function fetchTeamStandings(year = 2025) {
     const url = `https://api.jolpi.ca/ergast/f1/${year}/constructorStandings.json`;
     // const url = `https://ergast.com/api/f1/${year}/constructorStandings.json`;
     try {
         const response = await fetch(url);
-        const data = await response.json(); 
+        const data = await response.json();
 
         console.log("Fetched Team Data:", data);
 
-        selectedDrivers = []; // Reset selected drivers
-        drivers = []; // Reset drivers
+        selectedTeams = []; // Reset selected teams
+        teams = []; // Reset teams
         updateChart();
         if (!data || !data.MRData.StandingsTable.StandingsLists.length) {
             console.error("No team standings data found.");
@@ -82,9 +122,12 @@ async function fetchTeamStandings(year = 2025) {
         const standings = data.MRData.StandingsTable.StandingsLists[0].ConstructorStandings;
         console.log("Constructor standings:", standings);
 
+        const seasonData = await getSeasonDetails(year);
+        const completedRaces = getCompletedRaces(seasonData);
+        updateXAxis(completedRaces.length);
         updateTeamList(standings)
             // Format the result
-    ;
+            ;
         // You can add functionality to display team standings if needed
     } catch (error) {
         console.error("Error fetching team data:", error);
@@ -95,7 +138,7 @@ async function fetchTeamStandings(year = 2025) {
 
 
 //Places Points
-const driverPoints = (driver) => {
+/* const driverPoints = (driver) => {
     const points = driver.map((place) => {
         if (place === 1) return 25;
         if (place === 2) return 18;
@@ -113,7 +156,7 @@ const driverPoints = (driver) => {
     console.log("Points:", points.length);
     seasonRaces = points.length
     return driver.map((sum => value => sum += value)(0));
-};
+}; */
 
 
 /* async function getDriverResults({driverId}, season) {
@@ -153,65 +196,67 @@ const driverPoints = (driver) => {
     }
 } */
 
-    async function getDriverResults({ driverId }, season) {
-        console.log("Fetching full results for driver:", driverId, "in season:", season);
-    
-        const raceUrl = `https://api.jolpi.ca/ergast/f1/${season}/drivers/${driverId}/results.json`;
-        const sprintUrl = `https://api.jolpi.ca/ergast/f1/${season}/drivers/${driverId}/sprint.json`;
-    
-        const resultsDriver = [0]; // index = round number
-        try {
-            const [raceResponse, sprintResponse] = await Promise.all([
-                fetch(raceUrl),
-                fetch(sprintUrl)
-            ]);
-    
-            if (!raceResponse.ok || !sprintResponse.ok) {
-                throw new Error(`Fetch error: race ${raceResponse.status}, sprint ${sprintResponse.status}`);
-            }
-    
-            const raceData = await raceResponse.json();
-            const sprintData = await sprintResponse.json();
+import { getResults } from './api.js';
 
-            console.log("Fetched Driver Results Data:", raceData, sprintData);
+/*  async function getDriverResults({ driverId }, season) {
+     console.log("Fetching full results for driver:", driverId, "in season:", season);
+ 
+     const raceUrl = `https://api.jolpi.ca/ergast/f1/${season}/drivers/${driverId}/results.json`;
+     const sprintUrl = `https://api.jolpi.ca/ergast/f1/${season}/drivers/${driverId}/sprint.json`;
+ 
+     const resultsDriver = [0]; // index = round number
+     try {
+         const [raceResponse, sprintResponse] = await Promise.all([
+             fetch(raceUrl),
+             fetch(sprintUrl)
+         ]);
+ 
+         if (!raceResponse.ok || !sprintResponse.ok) {
+             throw new Error(`Fetch error: race ${raceResponse.status}, sprint ${sprintResponse.status}`);
+         }
+ 
+         const raceData = await raceResponse.json();
+         const sprintData = await sprintResponse.json();
 
-            const races = raceData.MRData?.RaceTable?.Races || [];
-            const sprints = sprintData.MRData?.RaceTable?.Races || [];
-    
-            // Build a quick lookup for sprint points by round
-            const sprintPointsByRound = new Map();
+         console.log("Fetched Driver Results Data:", raceData, sprintData);
 
-            console.log("Sprints:", sprints);
-            
-            for (const sprint of sprints) {
-                const round = Number(sprint.round);
-                const points = Number(sprint.SprintResults[0]?.points || 0);
-                sprintPointsByRound.set(round, points);
-            }
-    
-            // Process full results: main race + sprint per round
-            for (const race of races) {
-                const round = Number(race.round);
-                const racePoints = Number(race.Results[0]?.points || 0);
-                const sprintPoints = sprintPointsByRound.get(round) || 0;
-    
-                while (resultsDriver.length <= round) {
-                    resultsDriver.push(0);
-                }
-    
-                resultsDriver[round] = racePoints + sprintPoints;
-    
-                console.log(`Round ${round}: Main = ${racePoints}, Sprint = ${sprintPoints}, Total = ${resultsDriver[round]}`);
-            }
-    
-            console.log("Final Results with Sprints:", resultsDriver);
-            return driverPoints(resultsDriver);
-        } catch (error) {
-            console.error("Error fetching combined driver results:", error);
-            return null;
-        }
-    }
-    
+         const races = raceData.MRData?.RaceTable?.Races || [];
+         const sprints = sprintData.MRData?.RaceTable?.Races || [];
+ 
+         // Build a quick lookup for sprint points by round
+         const sprintPointsByRound = new Map();
+
+         console.log("Sprints:", sprints);
+         
+         for (const sprint of sprints) {
+             const round = Number(sprint.round);
+             const points = Number(sprint.SprintResults[0]?.points || 0);
+             sprintPointsByRound.set(round, points);
+         }
+ 
+         // Process full results: main race + sprint per round
+         for (const race of races) {
+             const round = Number(race.round);
+             const racePoints = Number(race.Results[0]?.points || 0);
+             const sprintPoints = sprintPointsByRound.get(round) || 0;
+ 
+             while (resultsDriver.length <= round) {
+                 resultsDriver.push(0);
+             }
+ 
+             resultsDriver[round] = racePoints + sprintPoints;
+ 
+             console.log(`Round ${round}: Main = ${racePoints}, Sprint = ${sprintPoints}, Total = ${resultsDriver[round]}`);
+         }
+ 
+         console.log("Final Results with Sprints:", resultsDriver);
+         return driverPoints(resultsDriver);
+     } catch (error) {
+         console.error("Error fetching combined driver results:", error);
+         return null;
+     }
+ } */
+
 
 /* const calculateDifferences = async (driver1, driver2) => {
     let driver1Points = await getDriverResults(driver1, selectedYear);
@@ -230,11 +275,13 @@ const driverPoints = (driver) => {
     return { averagePoints, driver1Diff, driver2Diff };
 }; */
 //TODO refactor code to be able to select more than 2 drivers
+import { calculateDifferences } from './stats.js';
+/* 
 const calculateDifferences = async (drivers) => {
     console.log("Calculating differences for drivers:", drivers);
     try {
         // Fetch points for all drivers
-        const pointsPromises = drivers.map(driver => getDriverResults(driver, selectedYear));
+        const pointsPromises = drivers.map(driver => getResults(driver, selectedYear));
         const allDriverPoints = await Promise.all(pointsPromises);
 
         // Log the points for debugging
@@ -277,7 +324,7 @@ const calculateDifferences = async (drivers) => {
         console.error("Error calculating differences:", error);
     }
 };
-
+ */
 
 // const { averagePoints, driver1Diff, driver2Diff } = calculateDifferences(driverPoints(ver), driverPoints(per));
 
@@ -293,7 +340,7 @@ verPoints.forEach((points, index) => {
 console.log(pointDiff) */
 
 document.querySelectorAll(".year-option").forEach(yearOption => {
-    yearOption.addEventListener("click", function() {
+    yearOption.addEventListener("click", function () {
         document.querySelectorAll(".year-option").forEach(el => el.classList.remove("current"));
         const clickedYear = this.innerHTML;
         console.log("Selected year:", clickedYear);
@@ -322,8 +369,8 @@ function showLoadingMessage() {
     const driverList = d3.select("#driver-list");
     driverList.html(""); // Clear current list
     driverList.append("div")
-        // .attr("class", "list-group-item text-center font-italic")
-        // .text("Loading...");
+    // .attr("class", "list-group-item text-center font-italic")
+    // .text("Loading...");
 }
 
 const teamColorScale = d3.scaleOrdinal(d3.schemeCategory10); // or d3.schemeTableau10, etc.
@@ -335,29 +382,29 @@ function getDriverColor(driver) {
     console.log("Team:", team);
     // Assign base color to team if not already assigned
     if (!teamDriverMap[team]) {
-      teamDriverMap[team] = [];
+        teamDriverMap[team] = [];
     }
-  
+
     // Add driver to team list if not present
     if (!teamDriverMap[team].includes(driver.driverId)) {
-      teamDriverMap[team].push(driver.driverId);
+        teamDriverMap[team].push(driver.driverId);
     }
-  
+
     if (driverColorMap[driver.driverId]) {
-      return driverColorMap[driver.driverId];
+        return driverColorMap[driver.driverId];
     }
-  
+
     const baseColor = d3.color(teamColorScale(team));
     const indexInTeam = teamDriverMap[team].indexOf(driver.driverId);
     const variation = 0.15 * indexInTeam;
-  
+
     const colorVariant = d3.hsl(baseColor);
     colorVariant.l = Math.max(0.3, Math.min(0.8, colorVariant.l - variation)); // Adjust lightness
     const finalColor = colorVariant.toString();
-  
+
     driverColorMap[driver.driverId] = finalColor;
     return finalColor;
-  }
+}
 
 
 let currentView = "drivers"; // default
@@ -372,16 +419,16 @@ function updateDriverList(standings) {
 
     standings.forEach(driver => {
         const driverId = {
-            driverId : driver.Driver.driverId,
-            givenName : driver.Driver.givenName,
-            familyName : driver.Driver.familyName,
-            team : driver.Constructors[0].name
+            driverId: driver.Driver.driverId,
+            givenName: driver.Driver.givenName,
+            familyName: driver.Driver.familyName,
+            team: driver.Constructors[0].name
         }
         driverList.append("li")
             .attr("class", "list-group-item")
             .attr("data-driver", driverId.driverId)
             .text(`${driver.Driver.code}`)
-            .on("click", function() {
+            .on("click", function () {
                 // console.log("Driver selected:", driverId);
                 handleDriverSelection(driverId);
             });
@@ -396,21 +443,21 @@ function updateTeamList(standings) {
 
     standings.forEach(team => {
         const teamId = {
-            teamId : team.Constructor.constructorId,
-            name : team.Constructor.name,
+            teamId: team.Constructor.constructorId,
+            name: team.Constructor.name,
         }
         driverList.append("li")
             .attr("class", "list-group-item")
             .attr("data-driver", teamId.teamId)
             .text(`${team.Constructor.name}`)
-            .on("click", function() {
+            .on("click", function () {
                 // console.log("Driver selected:", driverId);
-                handleDriverSelection(teamId);
+                handleTeamSelection(teamId);
             });
         drivers.push(teamId);
     });
 
-    }
+}
 const handleDriverSelection = (driverObj) => {
 
     // const driver = d3.select(this); // Read driver from attribute
@@ -425,12 +472,11 @@ const handleDriverSelection = (driverObj) => {
     }
 
     // Toggle selection
-    if (selectedDrivers.includes(driverObj)) {
-        selectedDrivers = selectedDrivers.filter(d => d !== driverObj);
-    } else if (selectedDrivers.length < 8){
-        console.log("Selecting driver:", driverObj);
-        selectedDrivers.push(driverObj);
-    }
+if (selectedDrivers.some(d => d.driverId === driverObj.driverId)) {
+  selectedDrivers = selectedDrivers.filter(d => d.driverId !== driverObj.driverId);
+} else if (selectedDrivers.length < 8) {
+  selectedDrivers.push(driverObj);
+}
 
     d3.selectAll(".list-group-item")
         .classed("selected", function () {
@@ -445,6 +491,38 @@ const handleDriverSelection = (driverObj) => {
     console.log(selectedDrivers);
 }
 
+const handleTeamSelection = (teamObj) => {
+    // const driver = d3.select(this); // Read driver from attribute
+    if (!selectedTeams) selectedTeams = []; // Ensure it's always an array
+
+    // Check if the driver is valid before proceeding
+    // console.log("Drivers:", driverObj);
+
+    if (!drivers.find(dri => dri.teamId === teamObj.teamId)) {
+        console.error(`Invalid team selected: ${teamObj}`);
+        return;
+    }
+
+    // Toggle selection
+    if (selectedTeams.includes(teamObj)) {
+        selectedTeams = selectedTeams.filter(d => d !== teamObj);
+    } else if (selectedTeams.length < 10) {
+        console.log("Selecting team:", teamObj);
+        selectedTeams.push(teamObj);
+    }
+
+    d3.selectAll(".list-group-item")
+        .classed("selected", function () {
+            const elementTeamId = d3.select(this).attr("data-driver");
+            return selectedTeams.some(d => d.teamId.includes(elementTeamId));
+        });
+
+    // Update chart if at least 2 drivers are selected
+    if (selectedTeams.length >= 2) {
+        updateTeamChart();
+    }
+    console.log(selectedTeams);
+}
 
 // Available colors for different drivers
 const colors = d3.scaleOrdinal(d3.schemeCategory10);
@@ -474,7 +552,7 @@ const svg = d3.select("#chart")
 // Resize function
 window.addEventListener("resize", () => {
     d3.select("#chart").attr("width", Math.min(window.innerWidth * 0.9, 1148))
-                        .attr("height", Math.min(window.innerHeight * 0.6, 470));
+        .attr("height", Math.min(window.innerHeight * 0.6, 470));
     updateChart();
 });
 
@@ -500,7 +578,7 @@ svg.append("text")
     .attr("fill", "white")
     .text("Race Number");
 
-    svg.append("text")
+svg.append("text")
     .attr("transform", "rotate(-90)")
     .attr("x", -height / 2)
     .attr("y", -30)
@@ -558,28 +636,74 @@ function updateChart() {
     svg.selectAll(".legend").remove();
     svg.selectAll(".grid").remove();
 
- /*    if (selectedDrivers.length !== 2) {
-        console.warn("Please select exactly two drivers to compare.");
-        return;
-    } */
+    /*    if (selectedDrivers.length !== 2) {
+           console.warn("Please select exactly two drivers to compare.");
+           return;
+       } */
 
-    const [driver1, driver2] = selectedDrivers;
-    console.log("Selected drivers:", driver1, driver2);
-    console.log(drivers.find(dri => dri.driverId === driver1.driverId))
+/*  async function getRaceWinners(season) {
+    const url = `https://api.jolpi.ca/ergast/f1/${season}/results/1.json?limit=300`; 
+    try {
+        const response = await fetch(url);
+        const data = await response.json();
+
+        const races = data.MRData.RaceTable.Races;
+
+        const winners = races.map(race => {
+            const result = race.Results[0]; // Winner is always position 1
+            return {
+                round: parseInt(race.round, 10),
+                driverId: result.Driver.driverId,
+                winner: `${result.Driver.givenName} ${result.Driver.familyName}`,
+                points: parseFloat(result.points), // include points!
+            };
+        });
+
+        return winners;
+    } catch (error) {
+        console.error("Error fetching race winners:", error);
+        return [];
+    }
+} */
+
+
+    if (selectedView === 'drivers') {
+        const [driver1, driver2] = selectedDrivers;
+        console.log("Selected drivers:", driver1, driver2);
+        console.log(drivers.find(dri => dri.driverId === driver1.driverId))
+        calculateDifferences(selectedDrivers)
+    } else if (selectedView === 'teams') {
+        const [team1, team2] = selectedTeams;
+        console.log("Selected teams:", team1, team2);
+        console.log(teams.find(team => team.teamId === team1.teamId))
+        calculateDifferences(selectedTeams)
+    }
     // Pass the actual arrays of points, not strings
-    calculateDifferences(selectedDrivers)
-/*     const { averagePoints, driver1Diff, driver2Diff } = calculateDifferences(
-        drivers.find(dri => dri.driverId === driver1.driverId), 
-        drivers.find(dri => dri.driverId === driver2.driverId)
-    ); */
+    /*     const { averagePoints, driver1Diff, driver2Diff } = calculateDifferences(
+            drivers.find(dri => dri.driverId === driver1.driverId), 
+            drivers.find(dri => dri.driverId === driver2.driverId)
+        ); */
 }
 
-const updateChartWithData = async (averagePoints, ...driversDiffs) => {
+function updateTeamChart() {
+    svg.selectAll(".line").remove();
+    svg.selectAll(".legend").remove();
+    svg.selectAll(".grid").remove();
 
-    if (!selectedDrivers || selectedDrivers.length === 0 || driversDiffs.some(diff => diff.length === 0)) {
-        console.warn("Insufficient data to update chart.");
+    calculateDifferences(selectedTeams)
+}
+
+export const updateChartWithData = async (averagePoints, ...driversDiffs) => {
+
+    if (selectedView === 'drivers' && (!selectedDrivers || selectedDrivers.length < 2)) {
+        console.warn("Please select at least two drivers to compare.");
+        return;
+
+    } else if (selectedView === 'teams' && (!selectedTeams || selectedTeams.length < 2)) {
+        console.warn("Please select at least two teams to compare.");
         return;
     }
+
 
     // Determine Y-axis range
     const allDiffs = driversDiffs.flat();
@@ -604,6 +728,7 @@ const updateChartWithData = async (averagePoints, ...driversDiffs) => {
         .x((d, i) => xScale(i))
         .y(d => yScale(d));
 
+    if (selectedView === 'drivers') {
         selectedDrivers.forEach((driver, i) => {
             svg.append("path")
                 .datum(driversDiffs[i])
@@ -612,7 +737,7 @@ const updateChartWithData = async (averagePoints, ...driversDiffs) => {
                 .attr("stroke", getDriverColor(driver))
                 .attr("stroke-width", 4)
                 .attr("d", lineGenerator);
-    
+
             svg.append("text")
                 .attr("class", "legend")
                 .attr("x", 0 + 10)
@@ -620,36 +745,54 @@ const updateChartWithData = async (averagePoints, ...driversDiffs) => {
                 .attr("fill", getDriverColor(driver))
                 .text(`${driver.familyName}`);
         });
+    } else if (selectedView === 'teams') {
+        selectedTeams.forEach((team, i) => {
+            svg.append("path")
+                .datum(driversDiffs[i])
+                .attr("class", "line")
+                .attr("fill", "none")
+                .attr("stroke", teamColorScale(team.name))
+                .attr("stroke-width", 4)
+                .attr("d", lineGenerator);
 
-        svg.append("g")
-        .attr("class", "grid")    
+            svg.append("text")
+                .attr("class", "legend")
+                .attr("x", 0 + 10)
+                .attr("y", 20 + i * 25)
+                .attr("fill", teamColorScale(team.name))
+                .text(`${team.name}`);
+        })
+    }
+
+    svg.append("g")
+        .attr("class", "grid")
         .attr("color", "grey")
         .call(d3.axisLeft(yScale).tickSize(-width).tickFormat(""));
-        
-        svg.append("g")
-            .attr("class", "grid")
-            .attr("color", "grey")
-            .attr("transform", `translate(0, ${height})`)
-            .call(d3.axisBottom(xScale).tickSize(-height).tickFormat(""));
+
+    svg.append("g")
+        .attr("class", "grid")
+        .attr("color", "grey")
+        .attr("transform", `translate(0, ${height})`)
+        .call(d3.axisBottom(xScale).tickSize(-height).tickFormat(""));
 
 
 }
 
 document.getElementById("show-drivers").addEventListener("click", () => {
-  selectedView = "drivers";
-  fetchDriverStandings(selectedYear, selectedView);
-  setActive("drivers");
+    selectedView = "drivers";
+    fetchDriverStandings(selectedYear, selectedView);
+    setActive("drivers");
 });
 
 document.getElementById("show-teams").addEventListener("click", () => {
-  selectedView = "teams";
-  fetchTeamStandings(selectedYear, selectedView);
-  setActive("teams");
+    selectedView = "teams";
+    fetchTeamStandings(selectedYear, selectedView);
+    setActive("teams");
 });
 
 function setActive(view) {
-  document.getElementById("show-drivers").classList.toggle("active", view === "drivers");
-  document.getElementById("show-teams").classList.toggle("active", view === "teams");
+    document.getElementById("show-drivers").classList.toggle("active", view === "drivers");
+    document.getElementById("show-teams").classList.toggle("active", view === "teams");
 }
 
 
