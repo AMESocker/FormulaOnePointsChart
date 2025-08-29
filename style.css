@@ -32,19 +32,26 @@ header h1 {
 
 /* --- Sidebar (Tower) --- */
 #tower {
+
   background: linear-gradient(180deg, #1c1c1c, #2a2a2a);
   padding: 1rem;
   border-radius: 12px 0 0 12px;
   box-shadow: inset 0 0 10px rgba(0,0,0,0.5);
+  height: 100%;
+  width: auto;
 }
 
 #tower div {
+  
   font-weight: 600;
   margin-bottom: 0.5rem;
   color: #aaa;
+  height: 100%;
 }
 
 .list-group {
+    display: grid;
+  grid-template-columns: repeat(2, 1fr);
   cursor: pointer;
   padding: 0;
   margin: 0;
@@ -97,6 +104,11 @@ header h1 {
 }
 
 /* --- Chart Container --- */
+#chartContainer {
+  display: flex;
+  align-items: stretch;
+  gap: 1rem;
+}
 #chart {
   background-color: #1a1a1a;
   border-radius: 0 0 12px 0;
