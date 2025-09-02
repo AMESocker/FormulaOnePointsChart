@@ -3,7 +3,7 @@
 
 🔗 [Live Demo](https://formulaonepointschart.vercel.app/) | 📂 [Repository](https://github.com/AMESocker/FormulaOnePointsChart)
 
-![Formula One Points Chart Screenshot](screenshot.png)
+<!-- ![Formula One Points Chart Screenshot](screenshot.png) -->
 
 ## 📖 Overview
 The Formula One Points Chart is an interactive data visualization project that displays and analyzes Formula 1 race results and point standings.  
