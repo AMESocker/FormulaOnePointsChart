@@ -16,7 +16,6 @@ let seasonRaces = 24
 
 
 // Fetch F1 data from API
-//?Done - add function to current year only charts the number of race run with date of races compared to todays date
 // TODO - chat height the same as the side column
 /* TODO Retrieve the height of the target element using JavaScript (e.g., element.getBoundingClientRect().height). 
 Apply the retrieved height to the other element using element.style.height = height + 'px';.  */
@@ -55,53 +54,6 @@ async function fetchDriverStandings(year = 2025) {
     }
 }
 
-/* async function fetchDriverStandings1(year = 2025) {
-    try {
-
-
-
-        const response = await fetch(url);
-        const data = await response.json();
-
-        console.log("Fetched Data:", data);
-
-        seasonRaces = data.MRData.total;
-
-        console.log("Rounds:", seasonRaces);
-
-        selectedDrivers = []; // Reset selected drivers
-        drivers = []; // Reset drivers
-        updateChart();
-        if (!data || !data.MRData.StandingsTable.StandingsLists.length) {
-            console.error("No standings data found.");
-            return;
-        }
-        
- 
-        // Extract driver standings
-        const standings = data.MRData.StandingsTable.StandingsLists[0].DriverStandings;
-        // console.log("Driver standings:", standings);
-        updateDriverList(standings);
-        selectedDrivers = []; // Reset selected drivers
-        // drivers = []; // Reset drivers
-        
-        const responseYear = await fetch(`https://api.jolpi.ca/ergast/f1/${year}.json`);
-        // const responseYear = await fetch(`https://ergast.com/api/f1/${year}.json`);
-        const dataYear = await responseYear.json();
-        const numberOfRaces = dataYear.MRData.total
-        const races = dataYear.MRData.RaceTable.Races
-        console.log("Races Run",dataYear.MRData.RaceTable.Races)
-        console.log(numberOfRaces, dataYear);
-        const today = new Date();
-        const completedRaces = races.filter(r => new Date(r.date) <= today);
-        console.log("Completed Races:", completedRaces.length);
-        updateXAxis(completedRaces.length)
-        console.log("Fetched Data:", dataYear);
-    } catch (error) {
-        console.error("Error fetching F1 data:", error);
-    }
-} */
-
 async function fetchTeamStandings(year = 2025) {
     const url = `https://api.jolpi.ca/ergast/f1/${year}/constructorStandings.json`;
     // const url = `https://ergast.com/api/f1/${year}/constructorStandings.json`;
@@ -134,210 +86,9 @@ async function fetchTeamStandings(year = 2025) {
     }
 }
 
-
-
-
-//Places Points
-/* const driverPoints = (driver) => {
-    const points = driver.map((place) => {
-        if (place === 1) return 25;
-        if (place === 2) return 18;
-        if (place === 3) return 15;
-        if (place === 4) return 12;
-        if (place === 5) return 10;
-        if (place === 6) return 8;
-        if (place === 7) return 6;
-        if (place === 8) return 4;
-        if (place === 9) return 2;
-        if (place === 10) return 1;
-        return 0;
-    });
-    // Convert to cumulative points
-    console.log("Points:", points.length);
-    seasonRaces = points.length
-    return driver.map((sum => value => sum += value)(0));
-}; */
-
-
-/* async function getDriverResults({driverId}, season) {
-    let resultsDriver = [0]
-    console.log("Fetching results for driver:", driverId, "in season:", season);
-    const raceUrl = `https://api.jolpi.ca/ergast/f1/${season}/drivers/${driverId}/results.json`;
-    const sprintUrl = `https://api.jolpi.ca/ergast/f1/${season}/drivers/${driverId}/sprint.json`;
-    try {
-        const response = await fetch(raceUrl);
-        const data = await response.json();
-        
-        console.log("Fetched Driver Results Data:", data);
-        let eachRace = data.MRData.RaceTable.Races
-
-       for (let i = 0; i < eachRace.length; i++) {
-            // console.log(eachRace[i]);
-            let raceResult = Number(eachRace[i].Results[0].points);
-            let roundNumber = Number(eachRace[i].round);
-        
-            console.log("Round Number:", roundNumber, "Points:", raceResult, "DriverL:", resultsDriver.length);
-        
-            // Ensure all missing rounds are populated with default value (20)
-            for (let j = resultsDriver.length; j <= roundNumber; j++) {
-                resultsDriver.push(0);
-            }
-        
-            // Assign the actual race result
-            resultsDriver[roundNumber] = raceResult;
-        }
-        
-
-        console.log(resultsDriver);
-        // console.log("Driver Points:", driverPoints(resultsDriver));
-        return driverPoints(resultsDriver);
-    } catch (error) {
-        console.error("Error fetching data:", error);
-    }
-} */
-
-import { getResults } from './api.js';
-
-/*  async function getDriverResults({ driverId }, season) {
-     console.log("Fetching full results for driver:", driverId, "in season:", season);
- 
-     const raceUrl = `https://api.jolpi.ca/ergast/f1/${season}/drivers/${driverId}/results.json`;
-     const sprintUrl = `https://api.jolpi.ca/ergast/f1/${season}/drivers/${driverId}/sprint.json`;
- 
-     const resultsDriver = [0]; // index = round number
-     try {
-         const [raceResponse, sprintResponse] = await Promise.all([
-             fetch(raceUrl),
-             fetch(sprintUrl)
-         ]);
- 
-         if (!raceResponse.ok || !sprintResponse.ok) {
-             throw new Error(`Fetch error: race ${raceResponse.status}, sprint ${sprintResponse.status}`);
-         }
- 
-         const raceData = await raceResponse.json();
-         const sprintData = await sprintResponse.json();
-
-         console.log("Fetched Driver Results Data:", raceData, sprintData);
-
-         const races = raceData.MRData?.RaceTable?.Races || [];
-         const sprints = sprintData.MRData?.RaceTable?.Races || [];
- 
-         // Build a quick lookup for sprint points by round
-         const sprintPointsByRound = new Map();
-
-         console.log("Sprints:", sprints);
-         
-         for (const sprint of sprints) {
-             const round = Number(sprint.round);
-             const points = Number(sprint.SprintResults[0]?.points || 0);
-             sprintPointsByRound.set(round, points);
-         }
- 
-         // Process full results: main race + sprint per round
-         for (const race of races) {
-             const round = Number(race.round);
-             const racePoints = Number(race.Results[0]?.points || 0);
-             const sprintPoints = sprintPointsByRound.get(round) || 0;
- 
-             while (resultsDriver.length <= round) {
-                 resultsDriver.push(0);
-             }
- 
-             resultsDriver[round] = racePoints + sprintPoints;
- 
-             console.log(`Round ${round}: Main = ${racePoints}, Sprint = ${sprintPoints}, Total = ${resultsDriver[round]}`);
-         }
- 
-         console.log("Final Results with Sprints:", resultsDriver);
-         return driverPoints(resultsDriver);
-     } catch (error) {
-         console.error("Error fetching combined driver results:", error);
-         return null;
-     }
- } */
-
-
-/* const calculateDifferences = async (driver1, driver2) => {
-    let driver1Points = await getDriverResults(driver1, selectedYear);
-    let driver2Points = await getDriverResults(driver2, selectedYear);
-   
-    console.log("D1P:", driver1Points);
-    console.log("D2P:", driver2Points);
-   
-    const averagePoints = driver1Points.map((points, index) =>
-        Number((driver1Points[index] + driver2Points[index]) / 2)
-    );
-    console.log("Average Points:", averagePoints);
-    const driver1Diff = driver1Points.map((points, index) => points - averagePoints[index]);
-    const driver2Diff = driver2Points.map((points, index) => points - averagePoints[index]);
-    updateChartWithData(averagePoints, driver1Diff, driver2Diff)
-    return { averagePoints, driver1Diff, driver2Diff };
-}; */
 //TODO refactor code to be able to select more than 2 drivers
 import { calculateDifferences } from './stats.js';
-/* 
-const calculateDifferences = async (drivers) => {
-    console.log("Calculating differences for drivers:", drivers);
-    try {
-        // Fetch points for all drivers
-        const pointsPromises = drivers.map(driver => getResults(driver, selectedYear));
-        const allDriverPoints = await Promise.all(pointsPromises);
 
-        // Log the points for debugging
-        allDriverPoints.forEach((points, index) => {
-            console.log(`D${index + 1}P:`, points);
-        });
-
-        // Ensure all drivers have the same number of results
-        const pointsLength = allDriverPoints[0].length;
-        if (allDriverPoints.some(points => points.length !== pointsLength)) {
-            throw new Error("Mismatch in number of results between drivers.");
-        }
-
-        // Calculate average points for all drivers
-        const averagePoints = allDriverPoints[0].map((_, index) => {
-            const sum = allDriverPoints.reduce((acc, points) => acc + points[index], 0);
-            return sum / allDriverPoints.length;
-        });
-
-        console.log("Average Points:", averagePoints);
-
-        // Calculate the differences from the average for each driver
-        const differences = allDriverPoints.map((driverPoints, driverIndex) => {
-            return driverPoints.map((points, index) => points - averagePoints[index]);
-        });
-
-        // Update the chart with the calculated data
-        updateChartWithData(averagePoints, ...differences);
-
-        // Return the results for each driver
-        const driverDiffs = drivers.map((driver, index) => ({
-            driver,
-            averagePoints,
-            diff: differences[index]
-        }));
-
-        return driverDiffs;
-    } catch (error) {
-        // Log any errors that occur during the process
-        console.error("Error calculating differences:", error);
-    }
-};
- */
-
-// const { averagePoints, driver1Diff, driver2Diff } = calculateDifferences(driverPoints(ver), driverPoints(per));
-
-// console.log("Average Points:", averagePoints);
-// console.log("Verstappen Difference:", driver1Diff);
-// console.log("Pérez Difference:", driver2Diff);
-
-
-/* const pointDiff = []
-verPoints.forEach((points, index) => {
-    pointDiff.push(points - perPoints[index])
-})
-console.log(pointDiff) */
 
 document.querySelectorAll(".year-option").forEach(yearOption => {
     yearOption.addEventListener("click", function () {
@@ -372,15 +123,17 @@ function showLoadingMessage() {
     // .attr("class", "list-group-item text-center font-italic")
     // .text("Loading...");
 }
+import { teamColors } from './colors.js';
 
-const teamColorScale = d3.scaleOrdinal(d3.schemeCategory10); // or d3.schemeTableau10, etc.
-const teamDriverMap = {}; // Map of team name to base color
+// Map of team -> list of drivers (so we know the index for variation)
+const teamDriverMap = {};
+// Map of driver -> final color
 const driverColorMap = {};
 
 function getDriverColor(driver) {
     const team = driver.team;
-    console.log("Team:", team);
-    // Assign base color to team if not already assigned
+
+    // Initialize team list if not present
     if (!teamDriverMap[team]) {
         teamDriverMap[team] = [];
     }
@@ -390,21 +143,35 @@ function getDriverColor(driver) {
         teamDriverMap[team].push(driver.driverId);
     }
 
+    // Return cached color if we’ve already generated one
     if (driverColorMap[driver.driverId]) {
         return driverColorMap[driver.driverId];
     }
 
-    const baseColor = d3.color(teamColorScale(team));
-    const indexInTeam = teamDriverMap[team].indexOf(driver.driverId);
-    const variation = 0.15 * indexInTeam;
+    // Base color from your custom team color map
+    const baseHex = teamColors[team] || "#888"; // fallback gray
+    const baseColor = d3.color(baseHex);
 
+    const indexInTeam = teamDriverMap[team].indexOf(driver.driverId);
+
+    // Convert to HSL for easier adjustment
     const colorVariant = d3.hsl(baseColor);
-    colorVariant.l = Math.max(0.3, Math.min(0.8, colorVariant.l - variation)); // Adjust lightness
+
+    // Generate variation — adjust lightness or saturation based on driver index
+    // First driver: base color, second: slightly darker/lighter, etc.
+    const variation = 0.12 * indexInTeam;
+    colorVariant.l = Math.max(0.3, Math.min(0.8, colorVariant.l - variation));
+
+    // Optionally tweak saturation too
+    colorVariant.s = Math.max(0.4, Math.min(1, colorVariant.s + variation * 0.5));
+
     const finalColor = colorVariant.toString();
 
+    // Cache it
     driverColorMap[driver.driverId] = finalColor;
     return finalColor;
 }
+
 
 
 let currentView = "drivers"; // default
@@ -448,7 +215,7 @@ function updateTeamList(standings) {
         }
         driverList.append("li")
             .attr("class", "list-group-item")
-            .attr("data-driver", teamId.teamId)
+            .attr("data-team", teamId.teamId)
             .text(`${team.Constructor.name}`)
             .on("click", function () {
                 // console.log("Driver selected:", driverId);
@@ -513,7 +280,7 @@ const handleTeamSelection = (teamObj) => {
 
     d3.selectAll(".list-group-item")
         .classed("selected", function () {
-            const elementTeamId = d3.select(this).attr("data-driver");
+            const elementTeamId = d3.select(this).attr("data-team");
             return selectedTeams.some(d => d.teamId.includes(elementTeamId));
         });
 
@@ -584,7 +351,7 @@ svg.append("text")
     .attr("y", -30)
     .attr("text-anchor", "middle")
     .attr("fill", "white")
-    .text("Points Difference");
+    .text("Δ Points vs Avg Drivers/Teams");
 
 /* // Add X axis
 svg.append("g")
@@ -730,11 +497,12 @@ export const updateChartWithData = async (averagePoints, ...driversDiffs) => {
 
     if (selectedView === 'drivers') {
         selectedDrivers.forEach((driver, i) => {
+            
             svg.append("path")
                 .datum(driversDiffs[i])
                 .attr("class", "line")
                 .attr("fill", "none")
-                .attr("stroke", getDriverColor(driver))
+                .attr("stroke", d =>  getDriverColor(driver))
                 .attr("stroke-width", 4)
                 .attr("d", lineGenerator);
 
@@ -742,7 +510,7 @@ export const updateChartWithData = async (averagePoints, ...driversDiffs) => {
                 .attr("class", "legend")
                 .attr("x", 0 + 10)
                 .attr("y", 20 + i * 25)
-                .attr("fill", getDriverColor(driver))
+                .attr("fill", d => getDriverColor(driver))
                 .text(`${driver.familyName}`);
         });
     } else if (selectedView === 'teams') {
@@ -751,7 +519,7 @@ export const updateChartWithData = async (averagePoints, ...driversDiffs) => {
                 .datum(driversDiffs[i])
                 .attr("class", "line")
                 .attr("fill", "none")
-                .attr("stroke", teamColorScale(team.name))
+                .attr("stroke", d => teamColors[team.name])
                 .attr("stroke-width", 4)
                 .attr("d", lineGenerator);
 
@@ -759,7 +527,7 @@ export const updateChartWithData = async (averagePoints, ...driversDiffs) => {
                 .attr("class", "legend")
                 .attr("x", 0 + 10)
                 .attr("y", 20 + i * 25)
-                .attr("fill", teamColorScale(team.name))
+                .attr("fill", d => teamColors[team.name])
                 .text(`${team.name}`);
         })
     }
