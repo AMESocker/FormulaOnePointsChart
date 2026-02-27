@@ -6,7 +6,7 @@
 //?Done have the chart be responsive to screen size
 //?Done - create more buffer between y axis label and chart border
 //----Global Variables----
-export let selectedYear = 2025; // Default year
+export let selectedYear = 2026; // Default year
 export let selectedView = 'drivers'; // Default view
 let drivers = [];
 let selectedDrivers = [];
@@ -23,7 +23,7 @@ Apply the retrieved height to the other element using element.style.height = hei
 import { getDriverStandings, getSeasonDetails, getRaceWinners } from './api.js';
 import { extractStandings, getCompletedRaces } from './helpers.js';
 
-async function fetchDriverStandings(year = 2025) {
+async function fetchDriverStandings(year = 2026) {
     try {
         // Fetch driver standings
         const standingsData = await getDriverStandings(year);
@@ -54,7 +54,7 @@ async function fetchDriverStandings(year = 2025) {
     }
 }
 
-async function fetchTeamStandings(year = 2025) {
+async function fetchTeamStandings(year = 2026) {
     const url = `https://api.jolpi.ca/ergast/f1/${year}/constructorStandings.json`;
     // const url = `https://ergast.com/api/f1/${year}/constructorStandings.json`;
     try {
@@ -175,7 +175,7 @@ function getDriverColor(driver) {
 
 
 let currentView = "drivers"; // default
-let currentYear = 2025;
+let currentYear = 2026;
 
 
 
@@ -497,14 +497,46 @@ export const updateChartWithData = async (averagePoints, ...driversDiffs) => {
 
     if (selectedView === 'drivers') {
         selectedDrivers.forEach((driver, i) => {
+            const diffData = driversDiffs[i];
             
+            //Line
             svg.append("path")
-                .datum(driversDiffs[i])
+                .datum(diffData)
                 .attr("class", "line")
                 .attr("fill", "none")
                 .attr("stroke", d =>  getDriverColor(driver))
                 .attr("stroke-width", 4)
                 .attr("d", lineGenerator);
+/* 
+            // Data points
+            svg.selectAll(`.dot-${driver.driverId}`)
+                .data(diffData)
+                .enter()
+                .append("circle")
+                .attr("class", `dot-${driver.driverId}`)
+                .attr("cx", (d, i) => xScale(i))
+                .attr("cy", d => yScale(d))
+                .attr("r", 5)
+                .attr("fill", getDriverColor(driver));
+
+                 // Labels on dots (finishing position)
+        svg.selectAll(`.label-${driver.driverId}`)
+            .data(diffData)
+            .enter()
+            .append("text")
+            .attr("class", `label-${driver.driverId}`)
+            .attr("x", (d, i) => xScale(i))
+            .attr("y", d => yScale(d) - 10) // place slightly above the dot
+            .attr("text-anchor", "middle")
+            .attr("fill", "white")
+            .attr("font-size", "10px")
+            .text((d, i) => {
+                // ⚠️ You’ll need finishing position info here
+                return driver.results && driver.results[i] 
+                    ? driver.results[i].position
+                    : "";
+            });
+ */
 
             svg.append("text")
                 .attr("class", "legend")
