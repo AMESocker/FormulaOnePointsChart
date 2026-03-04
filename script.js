@@ -2,11 +2,13 @@
 
 // TODO create a new page for qualifying head to head battles
 // TODO add "W" labels for wins
+// TODO reset labels when switching between different drivers
+// TODO add result numbers on the dots
 //?Done have x axis be with the chart box
 //?Done have the chart be responsive to screen size
 //?Done - create more buffer between y axis label and chart border
 //----Global Variables----
-export let selectedYear = 2026; // Default year
+export let selectedYear = 2025; // Default year
 export let selectedView = 'drivers'; // Default view
 let drivers = [];
 let selectedDrivers = [];
@@ -23,7 +25,7 @@ Apply the retrieved height to the other element using element.style.height = hei
 import { getDriverStandings, getSeasonDetails, getRaceWinners } from './api.js';
 import { extractStandings, getCompletedRaces } from './helpers.js';
 
-async function fetchDriverStandings(year = 2026) {
+async function fetchDriverStandings(year = 2025) {
     try {
         // Fetch driver standings
         const standingsData = await getDriverStandings(year);
@@ -54,7 +56,7 @@ async function fetchDriverStandings(year = 2026) {
     }
 }
 
-async function fetchTeamStandings(year = 2026) {
+async function fetchTeamStandings(year = 2025) {
     const url = `https://api.jolpi.ca/ergast/f1/${year}/constructorStandings.json`;
     // const url = `https://ergast.com/api/f1/${year}/constructorStandings.json`;
     try {
@@ -175,7 +177,7 @@ function getDriverColor(driver) {
 
 
 let currentView = "drivers"; // default
-let currentYear = 2026;
+let currentYear = 2025;
 
 
 
@@ -324,7 +326,7 @@ window.addEventListener("resize", () => {
 });
 
 // Define scales
-const xScale = d3.scaleLinear().domain([0, 24]).range([0, width]);
+const xScale = d3.scaleLinear().domain([1, 24]).range([0, width]);
 const yScale = d3.scaleLinear().domain([0, 25]).range([height, 0]);
 
 // Add axes
@@ -489,62 +491,84 @@ export const updateChartWithData = async (averagePoints, ...driversDiffs) => {
     svg.selectAll(".line").remove();
     svg.selectAll(".legend").remove();
     svg.selectAll(".grid").remove();
+    svg.selectAll(".dot-group").remove();
 
     // Define line generator
     const lineGenerator = d3.line()
-        .x((d, i) => xScale(i))
+        .x((d, i) => xScale(i + 1))
         .y(d => yScale(d));
+    svg.append("g")
+        .attr("class", "grid")
+        .attr("color", "grey")
+        .call(d3.axisLeft(yScale).tickSize(-width).tickFormat(""));
 
+    svg.append("g")
+        .attr("class", "grid")
+        .attr("color", "grey")
+        .attr("transform", `translate(0, ${height})`)
+        .call(d3.axisBottom(xScale).tickSize(-height).tickFormat(""));
+        
     if (selectedView === 'drivers') {
-        selectedDrivers.forEach((driver, i) => {
-            const diffData = driversDiffs[i];
-            
-            //Line
-            svg.append("path")
-                .datum(diffData)
-                .attr("class", "line")
-                .attr("fill", "none")
-                .attr("stroke", d =>  getDriverColor(driver))
-                .attr("stroke-width", 4)
-                .attr("d", lineGenerator);
-/* 
-            // Data points
-            svg.selectAll(`.dot-${driver.driverId}`)
-                .data(diffData)
-                .enter()
-                .append("circle")
-                .attr("class", `dot-${driver.driverId}`)
-                .attr("cx", (d, i) => xScale(i))
-                .attr("cy", d => yScale(d))
-                .attr("r", 5)
-                .attr("fill", getDriverColor(driver));
+// After drawing the line for each driver:
+selectedDrivers.forEach((driver, i) => {
+    const diffData = driversDiffs[i];
 
-                 // Labels on dots (finishing position)
-        svg.selectAll(`.label-${driver.driverId}`)
-            .data(diffData)
-            .enter()
-            .append("text")
-            .attr("class", `label-${driver.driverId}`)
-            .attr("x", (d, i) => xScale(i))
-            .attr("y", d => yScale(d) - 10) // place slightly above the dot
+    // Line
+    svg.append("path")
+        .datum(diffData)
+        .attr("class", `line line-${driver.driverId}`)
+        .attr("fill", "none")
+        .attr("stroke", getDriverColor(driver))
+        .attr("stroke-width", 4)
+        .attr("d", lineGenerator)
+        .on("mouseover", function() {
+            // Raise this driver's line, circles, and labels to the front
+            svg.selectAll(`.line-${driver.driverId}`).raise();
+            svg.selectAll(`.dot-group-${driver.driverId}`).raise();
+        });
+
+    // Dots with finishing position labels
+    const dotGroup = svg.append("g")
+        .attr("class", `dot-group dot-group-${driver.driverId}`);
+
+    diffData.forEach((d, idx) => {
+        const cx = xScale(idx);
+        const cy = yScale(d);
+        const pos = driver.results?.[idx]?.position ?? "";
+
+        // Circle
+        dotGroup.append("circle")
+            .attr("cx", xScale(idx + 1))
+            .attr("cy", cy)
+            .attr("r", 10)
+            .attr("fill", pos === 1 ? "gold" : getDriverColor(driver))
+            .attr("stroke", "#111")
+            .attr("stroke-width", 1);
+
+        // Position number inside dot
+        dotGroup.append("text")
+            .attr("x", xScale(idx + 1))
+            .attr("y", cy + 4) // vertically center text in circle
             .attr("text-anchor", "middle")
             .attr("fill", "white")
-            .attr("font-size", "10px")
-            .text((d, i) => {
-                // ⚠️ You’ll need finishing position info here
-                return driver.results && driver.results[i] 
-                    ? driver.results[i].position
-                    : "";
-            });
- */
+            .attr("font-size", "9px")
+            .attr("font-weight", "bold")
+            .attr("pointer-events", "none")
+            .text(pos);
+    });
 
-            svg.append("text")
-                .attr("class", "legend")
-                .attr("x", 0 + 10)
-                .attr("y", 20 + i * 25)
-                .attr("fill", d => getDriverColor(driver))
-                .text(`${driver.familyName}`);
+    // Legend
+    svg.append("text")
+        .attr("class", "legend")
+        .attr("x", 10)
+        .attr("y", 20 + i * 25)
+        .attr("fill", getDriverColor(driver))
+        .text(`${driver.familyName}`)
+        .on("mouseover", function() {  // ← also trigger on legend hover
+            svg.selectAll(`.line-${driver.driverId}`).raise();
+            svg.selectAll(`.dot-group-${driver.driverId}`).raise();
         });
+});
     } else if (selectedView === 'teams') {
         selectedTeams.forEach((team, i) => {
             svg.append("path")
@@ -564,16 +588,7 @@ export const updateChartWithData = async (averagePoints, ...driversDiffs) => {
         })
     }
 
-    svg.append("g")
-        .attr("class", "grid")
-        .attr("color", "grey")
-        .call(d3.axisLeft(yScale).tickSize(-width).tickFormat(""));
 
-    svg.append("g")
-        .attr("class", "grid")
-        .attr("color", "grey")
-        .attr("transform", `translate(0, ${height})`)
-        .call(d3.axisBottom(xScale).tickSize(-height).tickFormat(""));
 
 
 }
@@ -622,7 +637,7 @@ updateChart();
 const updateXAxis = (numRaces) => {
     console.log("Updating X-axis with", numRaces)
     // Update X-axis
-    xScale.domain([0, numRaces]);
+    xScale.domain([1, numRaces]);
     svg.select(".x-axis")
         .transition().duration(500)
         .call(d3.axisBottom(xScale).ticks(numRaces));
