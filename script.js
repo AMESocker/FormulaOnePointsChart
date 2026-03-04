@@ -115,6 +115,7 @@ function clearChart() {
     console.log("Clearing chart...");
     svg.selectAll(".line").remove();  // Remove previous lines
     svg.selectAll(".legend").remove(); // Remove legends
+    svg.selectAll(".dot-group").remove();
 }
 
 
@@ -404,6 +405,7 @@ function updateChart() {
     svg.selectAll(".line").remove();
     svg.selectAll(".legend").remove();
     svg.selectAll(".grid").remove();
+    svg.selectAll(".dot-group").remove();
 
     /*    if (selectedDrivers.length !== 2) {
            console.warn("Please select exactly two drivers to compare.");
@@ -458,6 +460,7 @@ function updateTeamChart() {
     svg.selectAll(".line").remove();
     svg.selectAll(".legend").remove();
     svg.selectAll(".grid").remove();
+    svg.selectAll(".dot-group").remove();
 
     calculateDifferences(selectedTeams)
 }
