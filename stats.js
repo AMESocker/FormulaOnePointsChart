@@ -3,11 +3,21 @@ import { selectedYear } from './script.js';
 import { updateChartWithData } from './script.js';
 
 export const calculateDifferences = async (drivers) => {
-console.log("Calculating differences for drivers:", drivers);
+    console.log("Calculating differences for drivers:", drivers);
     try {
-        // Fetch points for all drivers
-        const pointsPromises = drivers.map(driver => getResults(driver, selectedYear));
-        const allDriverPoints = await Promise.all(pointsPromises);
+        // Fetch points AND positions for all drivers
+        const resultsPromises = drivers.map(driver => getResults(driver, selectedYear));
+        const allResults = await Promise.all(resultsPromises);
+
+        // Separate points and positions, attach positions to each driver object
+        const allDriverPoints = allResults.map((result, i) => {
+            const { points, positions } = result;
+            // Attach finishing positions to the driver object for dot rendering
+            drivers[i].results = positions.slice(1).map(pos => ({ position: pos }));
+            return points;
+        });
+
+        console.log("All driver points:", allDriverPoints);
 
         // Find the maximum number of races among all drivers
         const maxLength = Math.max(...allDriverPoints.map(points => points.length));
@@ -29,11 +39,11 @@ console.log("Calculating differences for drivers:", drivers);
         console.log("Average Points:", averagePoints);
 
         // Calculate differences from average
-        const differences = normalizedPoints.map((driverPoints, driverIndex) => {
+        const differences = normalizedPoints.map((driverPoints) => {
             return driverPoints.map((points, index) => points - averagePoints[index]);
         });
 
-        // Update chart
+        // Update chart (drivers now have .results attached)
         updateChartWithData(averagePoints, ...differences);
 
         // Return driver diffs
