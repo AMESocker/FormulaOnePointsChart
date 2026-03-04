@@ -9,7 +9,7 @@ export async function getDriverStandings(year) {
   return response.json();
 }
 
-export async function getSeasonDetails(year = 2025) {
+export async function getSeasonDetails(year = 2026) {
   console.log("getSeasonDetails");
   const url = `https://api.jolpi.ca/ergast/f1/${year}.json`;
   const response = await fetch(url);
@@ -66,6 +66,7 @@ export async function getResults({ driverId, teamId }, season) {
     const sprintUrl = `https://api.jolpi.ca/ergast/f1/${season}/drivers/${driverId}/sprint.json`;
 
     const resultsDriver = [0]; // index = round number
+    const positionsDriver = [null];
     try {
       const [raceResponse, sprintResponse] = await Promise.all([
         fetch(raceUrl),
@@ -103,15 +104,17 @@ export async function getResults({ driverId, teamId }, season) {
 
         while (resultsDriver.length <= round) {
           resultsDriver.push(0);
+          positionsDriver.push(null);
         }
 
         resultsDriver[round] = racePoints + sprintPoints;
+         positionsDriver[round] = Number(race.Results[0]?.position ?? null);
 
         // console.log(`Round ${round}: Main = ${racePoints}, Sprint = ${sprintPoints}, Total = ${resultsDriver[round]}`);
       }
 
       console.log("Final Results with Sprints:", resultsDriver);
-      return driverPoints(resultsDriver);
+      return { points: driverPoints(resultsDriver).slice(1), positions: positionsDriver };
     } catch (error) {
       console.error("Error fetching combined driver results:", error);
       return null;
