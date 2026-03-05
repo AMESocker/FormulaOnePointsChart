@@ -1,9 +1,10 @@
 //F1 Points Chart
 
 // TODO create a new page for qualifying head to head battles
-// TODO add "W" labels for wins
-// TODO reset labels when switching between different drivers
-// TODO add result numbers on the dots
+// TODO - add a toggle to switch between points and qualifying performance (e.g., average qualifying position vs average grid position)
+// Todo - In mobile view have years above drivers or teams.
+//?Done reset labels when switching between different drivers
+//?Done add result numbers on the dots
 //?Done have x axis be with the chart box
 //?Done have the chart be responsive to screen size
 //?Done - create more buffer between y axis label and chart border
@@ -26,6 +27,10 @@ import { getDriverStandings, getSeasonDetails, getRaceWinners } from './api.js';
 import { extractStandings, getCompletedRaces } from './helpers.js';
 
 async function fetchDriverStandings(year = 2025) {
+    // Clear color caches so new year gets fresh team colors
+    Object.keys(teamDriverMap).forEach(k => delete teamDriverMap[k]);
+    Object.keys(driverColorMap).forEach(k => delete driverColorMap[k]);
+
     try {
         // Fetch driver standings
         const standingsData = await getDriverStandings(year);
@@ -57,6 +62,9 @@ async function fetchDriverStandings(year = 2025) {
 }
 
 async function fetchTeamStandings(year = 2025) {
+    // Clear color caches so new year gets fresh team colors
+    Object.keys(teamDriverMap).forEach(k => delete teamDriverMap[k]);
+    Object.keys(driverColorMap).forEach(k => delete driverColorMap[k]);
     const url = `https://api.jolpi.ca/ergast/f1/${year}/constructorStandings.json`;
     // const url = `https://ergast.com/api/f1/${year}/constructorStandings.json`;
     try {
@@ -88,7 +96,6 @@ async function fetchTeamStandings(year = 2025) {
     }
 }
 
-//TODO refactor code to be able to select more than 2 drivers
 import { calculateDifferences } from './stats.js';
 
 
@@ -186,6 +193,7 @@ let currentYear = 2025;
 function updateDriverList(standings) {
     const driverList = d3.select("#driver-list");
     driverList.html(""); // Clear previous list
+    driverList.attr("class", "list-group");
 
     standings.forEach(driver => {
         const driverId = {
@@ -210,6 +218,7 @@ console.log("Drivers:", drivers);
 function updateTeamList(standings) {
     const driverList = d3.select("#driver-list");
     driverList.html(""); // Clear previous list
+    driverList.attr("class", "list-group team-list");
 
     standings.forEach(team => {
         const teamId = {
@@ -242,11 +251,11 @@ const handleDriverSelection = (driverObj) => {
     }
 
     // Toggle selection
-if (selectedDrivers.some(d => d.driverId === driverObj.driverId)) {
-  selectedDrivers = selectedDrivers.filter(d => d.driverId !== driverObj.driverId);
-} else if (selectedDrivers.length < 8) {
-  selectedDrivers.push(driverObj);
-}
+    if (selectedDrivers.some(d => d.driverId === driverObj.driverId)) {
+        selectedDrivers = selectedDrivers.filter(d => d.driverId !== driverObj.driverId);
+    } else if (selectedDrivers.length < 8) {
+        selectedDrivers.push(driverObj);
+    }
 
     d3.selectAll(".list-group-item")
         .classed("selected", function () {
@@ -412,30 +421,30 @@ function updateChart() {
            return;
        } */
 
-/*  async function getRaceWinners(season) {
-    const url = `https://api.jolpi.ca/ergast/f1/${season}/results/1.json?limit=300`; 
-    try {
-        const response = await fetch(url);
-        const data = await response.json();
-
-        const races = data.MRData.RaceTable.Races;
-
-        const winners = races.map(race => {
-            const result = race.Results[0]; // Winner is always position 1
-            return {
-                round: parseInt(race.round, 10),
-                driverId: result.Driver.driverId,
-                winner: `${result.Driver.givenName} ${result.Driver.familyName}`,
-                points: parseFloat(result.points), // include points!
-            };
-        });
-
-        return winners;
-    } catch (error) {
-        console.error("Error fetching race winners:", error);
-        return [];
-    }
-} */
+    /*  async function getRaceWinners(season) {
+        const url = `https://api.jolpi.ca/ergast/f1/${season}/results/1.json?limit=300`; 
+        try {
+            const response = await fetch(url);
+            const data = await response.json();
+    
+            const races = data.MRData.RaceTable.Races;
+    
+            const winners = races.map(race => {
+                const result = race.Results[0]; // Winner is always position 1
+                return {
+                    round: parseInt(race.round, 10),
+                    driverId: result.Driver.driverId,
+                    winner: `${result.Driver.givenName} ${result.Driver.familyName}`,
+                    points: parseFloat(result.points), // include points!
+                };
+            });
+    
+            return winners;
+        } catch (error) {
+            console.error("Error fetching race winners:", error);
+            return [];
+        }
+    } */
 
 
     if (selectedView === 'drivers') {
@@ -510,68 +519,136 @@ export const updateChartWithData = async (averagePoints, ...driversDiffs) => {
         .attr("color", "grey")
         .attr("transform", `translate(0, ${height})`)
         .call(d3.axisBottom(xScale).tickSize(-height).tickFormat(""));
-        
+
     if (selectedView === 'drivers') {
-// After drawing the line for each driver:
-selectedDrivers.forEach((driver, i) => {
-    const diffData = driversDiffs[i];
+        // After drawing the line for each driver:
+        selectedDrivers.forEach((driver, i) => {
+            const diffData = driversDiffs[i];
 
-    // Line
-    svg.append("path")
-        .datum(diffData)
-        .attr("class", `line line-${driver.driverId}`)
-        .attr("fill", "none")
-        .attr("stroke", getDriverColor(driver))
-        .attr("stroke-width", 4)
-        .attr("d", lineGenerator)
-        .on("mouseover", function() {
-            // Raise this driver's line, circles, and labels to the front
-            svg.selectAll(`.line-${driver.driverId}`).raise();
-            svg.selectAll(`.dot-group-${driver.driverId}`).raise();
+            // Line
+            svg.append("path")
+                .datum(diffData)
+                .attr("class", `line line-${driver.driverId}`)
+                .attr("fill", "none")
+                .attr("stroke", "transparent")
+                .attr("stroke-width", 20)
+                .attr("d", lineGenerator)
+                .on("mouseover", function () {
+                    //     // Dim all lines and dots
+                    //     svg.selectAll(".line")
+                    //         .attr("opacity", 0.35);
+                    //     svg.selectAll(".dot-group")
+                    //         .attr("opacity", 0.35);
+                    //     svg.selectAll(".legend")
+                    //         .attr("opacity", 0.35);
+
+                    // Bring hovered driver to full opacity and front
+                    svg.selectAll(`.line-${driver.driverId}`)
+                        .attr("opacity", 1)
+                        .raise();
+                    svg.selectAll(`.dot-group-${driver.driverId}`)
+                        .attr("opacity", 1)
+                        .raise();
+                    //     svg.selectAll(`.legend-${driver.driverId}`)
+                    //         .attr("opacity", 1)
+                    //         .attr("font-weight", "bold")
+                    //         .attr("font-size", "16px");
+                })
+            // .on("mouseout", function () {
+            //     // Restore everything
+            //     svg.selectAll(".line")
+            //         .attr("opacity", 1);
+            //     svg.selectAll(".dot-group")
+            //         .attr("opacity", 1);
+            //     svg.selectAll(".legend")
+            //         .attr("opacity", 1)
+            //         .attr("font-weight", "normal")
+            //         .attr("font-size", "12px")
+            //         .attr("text-decoration", "none");
+            // });
+
+            svg.append("path")
+                .datum(diffData)
+                .attr("class", `line line-${driver.driverId}`)
+                .attr("fill", "none")
+                .attr("stroke", getDriverColor(driver))
+                .attr("stroke-width", 4)
+                .attr("pointer-events", "none")  // ← let the hit area above handle events
+                .attr("d", lineGenerator);
+            // Dots with finishing position labels
+            const dotGroup = svg.append("g")
+                .attr("class", `dot-group dot-group-${driver.driverId}`);
+
+            diffData.forEach((d, idx) => {
+                const cx = xScale(idx);
+                const cy = yScale(d);
+                const pos = driver.results?.[idx]?.position ?? "";
+
+                // Circle
+                dotGroup.append("circle")
+                    .attr("cx", xScale(idx + 1))
+                    .attr("cy", cy)
+                    .attr("r", 10)
+                    .attr("fill", pos === 1 ? "gold" : pos === 2 ? "silver" : pos === 3 ? "#cd7f32" : getDriverColor(driver))
+                    .attr("stroke", "#111")
+                    .attr("stroke-width", 1)
+                    .attr("pointer-events", "none");
+
+                // Position number inside dot
+                dotGroup.append("text")
+                    .attr("x", xScale(idx + 1))
+                    .attr("y", cy + 4) // vertically center text in circle
+                    .attr("text-anchor", "middle")
+                    .attr("fill", "white")
+                    .attr("font-size", "9px")
+                    .attr("font-weight", "bold")
+                    .attr("pointer-events", "none")
+                    .text(pos);
+            });
+
+            // Legend
+            svg.append("text")
+                .attr("class", `legend legend-${driver.driverId}`)
+                .style("cursor", "default")
+                .attr("x", 10)
+                .attr("y", 20 + i * 25)
+
+                .attr("fill", getDriverColor(driver))
+                .text(`${driver.familyName}`)
+                .on("mouseover", function () {
+                    // Dim all lines and dots
+                    svg.selectAll(".line")
+                        .attr("opacity", 0.35);
+                    svg.selectAll(".dot-group")
+                        .attr("opacity", 0.35);
+                    svg.selectAll(".legend")
+                        .attr("opacity", 0.35);
+
+                    // Bring hovered driver to full opacity and front
+                    svg.selectAll(`.line-${driver.driverId}`)
+                        .attr("opacity", 1)
+                        .raise();
+                    svg.selectAll(`.dot-group-${driver.driverId}`)
+                        .attr("opacity", 1)
+                        .raise();
+                    svg.selectAll(`.legend-${driver.driverId}`)
+                        .attr("opacity", 1)
+                        .attr("font-weight", "bold")
+                        .attr("font-size", "16px");
+                })
+                .on("mouseout", function () {
+                    // Restore everything
+                    svg.selectAll(".line")
+                        .attr("opacity", 1);
+                    svg.selectAll(".dot-group")
+                        .attr("opacity", 1);
+                    svg.selectAll(".legend")
+                        .attr("opacity", 1)
+                        .attr("font-weight", "normal")
+                        .attr("font-size", "12px")
+                        .attr("text-decoration", "none");
+                });
         });
-
-    // Dots with finishing position labels
-    const dotGroup = svg.append("g")
-        .attr("class", `dot-group dot-group-${driver.driverId}`);
-
-    diffData.forEach((d, idx) => {
-        const cx = xScale(idx);
-        const cy = yScale(d);
-        const pos = driver.results?.[idx]?.position ?? "";
-
-        // Circle
-        dotGroup.append("circle")
-            .attr("cx", xScale(idx + 1))
-            .attr("cy", cy)
-            .attr("r", 10)
-            .attr("fill", pos === 1 ? "gold" : getDriverColor(driver))
-            .attr("stroke", "#111")
-            .attr("stroke-width", 1);
-
-        // Position number inside dot
-        dotGroup.append("text")
-            .attr("x", xScale(idx + 1))
-            .attr("y", cy + 4) // vertically center text in circle
-            .attr("text-anchor", "middle")
-            .attr("fill", "white")
-            .attr("font-size", "9px")
-            .attr("font-weight", "bold")
-            .attr("pointer-events", "none")
-            .text(pos);
-    });
-
-    // Legend
-    svg.append("text")
-        .attr("class", "legend")
-        .attr("x", 10)
-        .attr("y", 20 + i * 25)
-        .attr("fill", getDriverColor(driver))
-        .text(`${driver.familyName}`)
-        .on("mouseover", function() {  // ← also trigger on legend hover
-            svg.selectAll(`.line-${driver.driverId}`).raise();
-            svg.selectAll(`.dot-group-${driver.driverId}`).raise();
-        });
-});
     } else if (selectedView === 'teams') {
         selectedTeams.forEach((team, i) => {
             svg.append("path")
@@ -590,10 +667,6 @@ selectedDrivers.forEach((driver, i) => {
                 .text(`${team.name}`);
         })
     }
-
-
-
-
 }
 
 document.getElementById("show-drivers").addEventListener("click", () => {
