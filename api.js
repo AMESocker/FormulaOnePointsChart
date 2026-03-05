@@ -171,7 +171,7 @@ export async function getResults({ driverId, teamId }, season) {
       }
 
       console.log("Final Results with Sprints:", resultsTeam);
-      return driverPoints(resultsTeam);
+      return { points: driverPoints(resultsTeam).slice(1), positions: [] };
       console.log("Line Completed");
   } catch (error) {
       console.error("Error fetching combined driver results:", error);
