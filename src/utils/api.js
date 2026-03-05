@@ -15,7 +15,7 @@ export const getDriverResults = async (driverId, season) => {
 };
 
 // Fetch F1 data from API
-export async function fetchDriverStandings(year = 2024) {
+export async function fetchDriverStandings(year = 2025) {
   try {
       const response = await fetch(`https://ergast.com/api/f1/${year}/driverStandings.json`);
       const data = await response.json();
