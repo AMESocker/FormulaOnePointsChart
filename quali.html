@@ -1,0 +1,362 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <script async src="https://www.googletagmanager.com/gtag/js?id=G-60MRX4QNEP"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag() { dataLayer.push(arguments); }
+    gtag('js', new Date());
+    gtag('config', 'G-60MRX4QNEP');
+  </script>
+
+  <meta charset="UTF-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>F1 Qualifying Head to Head</title>
+  <meta name="description" content="F1 Qualifying Head to Head comparison between teammates">
+
+  <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;600;700;800&family=Barlow:wght@400;500;600&display=swap" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="./style.css">
+  <script src="https://d3js.org/d3.v5.min.js"></script>
+
+  <style>
+    :root {
+      --bg: #0a0a0f;
+      --surface: #13131a;
+      --border: #22222e;
+      --text: #e8e8f0;
+      --muted: #55556a;
+      --accent: #e10600;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'Barlow', sans-serif;
+      min-height: 100vh;
+    }
+
+    header {
+      padding: 2rem 2rem 1rem;
+      border-bottom: 1px solid var(--border);
+    }
+
+    header h1 {
+      font-family: 'Barlow Condensed', sans-serif;
+      font-weight: 800;
+      font-size: 2rem;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+    }
+
+    header a {
+      color: var(--muted);
+      text-decoration: none;
+      font-size: 0.85rem;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+      transition: color 0.2s;
+    }
+
+    header a:hover { color: var(--text); }
+
+    .year-nav {
+      display: flex;
+      gap: 0.25rem;
+      flex-wrap: wrap;
+      padding: 1rem 2rem;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .year-btn {
+      background: none;
+      border: 1px solid var(--border);
+      color: var(--muted);
+      font-family: 'Barlow Condensed', sans-serif;
+      font-weight: 600;
+      font-size: 0.9rem;
+      letter-spacing: 0.05em;
+      padding: 0.3rem 0.75rem;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+
+    .year-btn:hover { color: var(--text); border-color: var(--muted); }
+    .year-btn.active { color: var(--accent); border-color: var(--accent); }
+
+    .layout {
+      display: grid;
+      grid-template-columns: 220px 1fr;
+      min-height: calc(100vh - 120px);
+    }
+
+    /* Driver list */
+    .driver-panel {
+      border-right: 1px solid var(--border);
+      padding: 1.5rem 1rem;
+    }
+
+    .panel-label {
+      font-family: 'Barlow Condensed', sans-serif;
+      font-size: 0.7rem;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--muted);
+      margin-bottom: 0.75rem;
+    }
+
+    .driver-item {
+      display: flex;
+      align-items: center;
+      gap: 0.6rem;
+      padding: 0.5rem 0.75rem;
+      margin-bottom: 2px;
+      cursor: pointer;
+      border: 1px solid transparent;
+      transition: all 0.15s;
+      font-family: 'Barlow Condensed', sans-serif;
+      font-weight: 600;
+      font-size: 1rem;
+      letter-spacing: 0.05em;
+    }
+
+    .driver-item:hover { background: var(--surface); border-color: var(--border); }
+
+    .driver-item.selected-a {
+      border-color: var(--driver-color, #fff);
+      background: color-mix(in srgb, var(--driver-color, #fff) 10%, transparent);
+    }
+
+    .driver-item.selected-b {
+      border-color: var(--driver-color, #fff);
+      background: color-mix(in srgb, var(--driver-color, #fff) 10%, transparent);
+      opacity: 0.75;
+    }
+
+    .driver-swatch {
+      width: 3px;
+      height: 18px;
+      border-radius: 2px;
+      flex-shrink: 0;
+    }
+
+    .driver-team {
+      font-size: 0.7rem;
+      color: var(--muted);
+      font-weight: 400;
+      letter-spacing: 0.03em;
+      margin-left: auto;
+    }
+
+    /* Main content */
+    .main-panel {
+      padding: 2rem;
+    }
+
+    /* H2H header */
+    .h2h-header {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 2rem;
+      margin-bottom: 2.5rem;
+    }
+
+    .h2h-driver {
+      text-align: center;
+    }
+
+    .h2h-driver-name {
+      font-family: 'Barlow Condensed', sans-serif;
+      font-size: 2.5rem;
+      font-weight: 800;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+      line-height: 1;
+    }
+
+    .h2h-driver-team {
+      font-size: 0.75rem;
+      color: var(--muted);
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      margin-top: 0.25rem;
+    }
+
+    .h2h-vs {
+      font-family: 'Barlow Condensed', sans-serif;
+      font-size: 1.2rem;
+      font-weight: 700;
+      color: var(--muted);
+      letter-spacing: 0.1em;
+    }
+
+    /* Score bar */
+    .score-section {
+      margin-bottom: 3rem;
+    }
+
+    .score-bar-wrap {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      margin-bottom: 0.5rem;
+    }
+
+    .score-count {
+      font-family: 'Barlow Condensed', sans-serif;
+      font-size: 3rem;
+      font-weight: 800;
+      line-height: 1;
+      min-width: 3rem;
+    }
+
+    .score-count.left { text-align: right; }
+    .score-count.right { text-align: left; }
+
+    .score-bar-track {
+      flex: 1;
+      height: 12px;
+      background: var(--border);
+      border-radius: 6px;
+      overflow: hidden;
+      display: flex;
+    }
+
+    .score-bar-a {
+      height: 100%;
+      border-radius: 6px 0 0 6px;
+      transition: width 0.8s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    .score-bar-b {
+      height: 100%;
+      border-radius: 0 6px 6px 0;
+      transition: width 0.8s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    /* Race by race grid */
+    .races-label {
+      font-family: 'Barlow Condensed', sans-serif;
+      font-size: 0.7rem;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--muted);
+      margin-bottom: 1rem;
+    }
+
+    .races-grid {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+    }
+
+    .race-cell {
+      width: 48px;
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      overflow: hidden;
+      font-family: 'Barlow Condensed', sans-serif;
+      font-size: 0.7rem;
+      letter-spacing: 0.03em;
+      position: relative;
+    }
+
+    .race-cell-round {
+      text-align: center;
+      color: var(--muted);
+      font-size: 0.65rem;
+      padding: 2px 0;
+      background: var(--surface);
+    }
+
+    .race-cell-winner {
+      padding: 4px 2px;
+      text-align: center;
+      font-weight: 700;
+      font-size: 0.8rem;
+    }
+
+    .race-cell.dnf .race-cell-winner {
+      color: var(--muted);
+      font-weight: 400;
+      font-size: 0.65rem;
+    }
+
+    /* Loading */
+    .loading-msg {
+      color: var(--muted);
+      font-family: 'Barlow Condensed', sans-serif;
+      font-size: 0.9rem;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      padding: 2rem 0;
+    }
+
+    /* Tooltip */
+    #quali-tooltip {
+      position: fixed;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      padding: 8px 12px;
+      border-radius: 4px;
+      font-size: 0.8rem;
+      pointer-events: none;
+      opacity: 0;
+      transition: opacity 0.15s;
+      z-index: 999;
+      font-family: 'Barlow Condensed', sans-serif;
+      letter-spacing: 0.04em;
+      line-height: 1.6;
+      min-width: 160px;
+    }
+
+    @media (max-width: 768px) {
+      .layout { grid-template-columns: 1fr; }
+      .driver-panel { border-right: none; border-bottom: 1px solid var(--border); }
+      .h2h-driver-name { font-size: 1.8rem; }
+      .score-count { font-size: 2rem; }
+    }
+  </style>
+</head>
+<body>
+
+  <header class="d-flex align-items-center justify-content-between">
+    <h1>F1 Qualifying H2H</h1>
+    <a href="index.html">← Points Chart</a>
+  </header>
+        <div class="mb-3">
+          <button id="show-drivers" class="btn btn-sm btn-outline-light me-2 active">Drivers</button>
+          <button id="show-teams" class="btn btn-sm btn-outline-light">Teams</button>
+        </div>
+  <div class="year-nav" id="year-nav">
+    <button class="year-btn" data-year="2026">2026</button>
+    <button class="year-btn active" data-year="2025">2025</button>
+    <button class="year-btn" data-year="2024">2024</button>
+    <button class="year-btn" data-year="2023">2023</button>
+    <button class="year-btn" data-year="2022">2022</button>
+    <button class="year-btn" data-year="2021">2021</button>
+    <button class="year-btn" data-year="2020">2020</button>
+  </div>
+
+  <div class="layout">
+    <div class="driver-panel">
+      <div class="panel-label">Select Two Drivers</div>
+      <ul id="driver-list" style="list-style:none; padding:0;"></ul>
+    </div>
+
+    <div class="main-panel">
+      <div id="h2h-content">
+        <div class="loading-msg">Loading...</div>
+      </div>
+    </div>
+  </div>
+
+  <div id="quali-tooltip"></div>
+
+  <script type="module" src="./quali.js"></script>
+</body>
+</html>
