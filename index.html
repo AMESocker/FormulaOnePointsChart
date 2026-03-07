@@ -45,17 +45,17 @@
   <div id="tab-race" class="tab-panel active">
     <main id="chartContainer" class="container mt-4">
       <!-- <div class="row"> -->
-      <div id="tower" class="col-md-1">
-        <!-- <div class="col-md-2 col-12 text-center"> -->
-        <!-- TODO Highlight drivers on default. Able to select teams and updates chart -->
-        <!-- TODO In mobile view make drivers a dropdown list-->
-        <!-- <div>Drivers</div>
-                <div>Teams</div> -->
-        <!-- <div class="mb-2">
-          <button class="tab-btn active" data-tab="race">Race</button>
-          <button class="tab-btn" data-tab="quali">Quali</button>
-        </div> -->
-        <div class="mb-3">
+        <div id="tower" class="col-md-1">
+          <!-- <div class="col-md-2 col-12 text-center"> -->
+            <!-- TODO Highlight drivers on default. Able to select teams and updates chart -->
+            <!-- TODO In mobile view make drivers a dropdown list-->
+            <!-- <div>Drivers</div>
+            <div>Teams</div> -->
+            <!-- <div class="mb-2">
+              <button class="tab-btn active" data-tab="race">Race</button>
+              <button class="tab-btn" data-tab="quali">Quali</button>
+            </div> -->
+            <div class="mb-3">
           <button id="show-drivers" class="btn btn-sm btn-outline-light me-2 active">Drivers</button>
           <button id="show-teams" class="btn btn-sm btn-outline-light">Teams</button>
         </div>
@@ -68,6 +68,7 @@
         <nav class="navbar bg-body-tertiary">
           <!-- <nav class="navbar navbar-expand-md bg-body-tertiary justify-content-center"> -->
           <div class="container-fluid">
+
             <a class="navbar-brand year-option" href="#">2026</a>
             <a class="navbar-brand year-option current" href="#">2025</a>
             <a class="navbar-brand year-option" href="#">2024</a>
@@ -77,9 +78,10 @@
             <a class="navbar-brand year-option" href="#">2020</a>
 
 
+            <button id="snapshot-btn">📸 Share Chart</button>
           </div>
         </nav>
-
+        
         <div id="chart" class="chart-container"></div>
       </div>
       <!-- </div> -->
@@ -151,7 +153,7 @@
   }
 }
 </script>
-
+<div id="tooltip" style="position:fixed; opacity:0; pointer-events:none; transition: opacity 0.15s;"></div>
 </body>
 
 </html>

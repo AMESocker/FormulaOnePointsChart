@@ -25,6 +25,7 @@ Apply the retrieved height to the other element using element.style.height = hei
 
 import { getDriverStandings, getSeasonDetails, getRaceWinners } from './api.js';
 import { extractStandings, getCompletedRaces } from './helpers.js';
+import { fetchQualiForDrivers, buildH2H } from './quali.js';
 
 async function fetchDriverStandings(year = 2025) {
     // Clear color caches so new year gets fresh team colors
@@ -53,7 +54,7 @@ async function fetchDriverStandings(year = 2025) {
         // Fetch season details
         const seasonData = await getSeasonDetails(year);
         const completedRaces = getCompletedRaces(seasonData);
-        console.log("Completed Races:", completedRaces.length);
+        // console.log("Completed Races:", completedRaces.length);
         updateXAxis(completedRaces.length);
 
     } catch (error) {
@@ -71,7 +72,7 @@ async function fetchTeamStandings(year = 2025) {
         const response = await fetch(url);
         const data = await response.json();
 
-        console.log("Fetched Team Data:", data);
+        // console.log("Fetched Team Data:", data);
 
         selectedTeams = []; // Reset selected teams
         teams = []; // Reset teams
@@ -82,7 +83,7 @@ async function fetchTeamStandings(year = 2025) {
         }
         // Extract team standings
         const standings = data.MRData.StandingsTable.StandingsLists[0].ConstructorStandings;
-        console.log("Constructor standings:", standings);
+        // console.log("Constructor standings:", standings);
 
         const seasonData = await getSeasonDetails(year);
         const completedRaces = getCompletedRaces(seasonData);
@@ -103,13 +104,14 @@ document.querySelectorAll(".year-option").forEach(yearOption => {
     yearOption.addEventListener("click", function () {
         document.querySelectorAll(".year-option").forEach(el => el.classList.remove("current"));
         const clickedYear = this.innerHTML;
-        console.log("Selected year:", clickedYear);
+        // console.log("Selected year:", clickedYear);
         selectedYear = clickedYear; // Update selected year
         this.classList.add("current");
+        pushState();
         showLoadingMessage()
         clearChart();
         showLoadingMessage();
-        console.log("Selected view:", selectedView);
+        // console.log("Selected view:", selectedView);
         if (selectedView === 'drivers') {
             fetchDriverStandings(clickedYear); // Fetch new data
         } else if (selectedView === 'teams') {
@@ -119,7 +121,7 @@ document.querySelectorAll(".year-option").forEach(yearOption => {
 });
 
 function clearChart() {
-    console.log("Clearing chart...");
+    // console.log("Clearing chart...");
     svg.selectAll(".line").remove();  // Remove previous lines
     svg.selectAll(".legend").remove(); // Remove legends
     svg.selectAll(".dot-group").remove();
@@ -143,6 +145,17 @@ const driverColorMap = {};
 function getDriverColor(driver) {
     const team = driver.team;
 
+    if (!teamDriverMap[team]) teamDriverMap[team] = [];
+    if (!teamDriverMap[team].includes(driver.driverId)) teamDriverMap[team].push(driver.driverId);
+    if (driverColorMap[driver.driverId]) return driverColorMap[driver.driverId];
+
+    const baseHex = teamColors[team];
+
+    if (!baseHex) {
+        console.warn(`No color found for team: "${team}"`); // ← shows exact team name
+        driverColorMap[driver.driverId] = "#f2ff00";
+        return "#f2ff00";
+    }
     // Initialize team list if not present
     if (!teamDriverMap[team]) {
         teamDriverMap[team] = [];
@@ -159,7 +172,7 @@ function getDriverColor(driver) {
     }
 
     // Base color from your custom team color map
-    const baseHex = teamColors[team] || "#888"; // fallback gray
+    // const baseHex = teamColors[team] || "#eaff00"; // fallback gray
     const baseColor = d3.color(baseHex);
 
     const indexInTeam = teamDriverMap[team].indexOf(driver.driverId);
@@ -179,6 +192,7 @@ function getDriverColor(driver) {
 
     // Cache it
     driverColorMap[driver.driverId] = finalColor;
+    console.log(`Assigned color for ${driver.givenName} ${driver.familyName} (${team}):`, finalColor);
     return finalColor;
 }
 
@@ -205,6 +219,7 @@ function updateDriverList(standings) {
         driverList.append("li")
             .attr("class", "list-group-item")
             .attr("data-driver", driverId.driverId)
+            .style("--team-color", getDriverColor(driverId)) 
             .text(`${driver.Driver.code}`)
             .on("click", function () {
                 // console.log("Driver selected:", driverId);
@@ -213,7 +228,7 @@ function updateDriverList(standings) {
         drivers.push(driverId);
     });
 }
-console.log("Drivers:", drivers);
+// console.log("Drivers:", drivers);
 
 function updateTeamList(standings) {
     const driverList = d3.select("#driver-list");
@@ -226,9 +241,10 @@ function updateTeamList(standings) {
             name: team.Constructor.name,
         }
         driverList.append("li")
-            .attr("class", "list-group-item")
-            .attr("data-team", teamId.teamId)
-            .text(`${team.Constructor.name}`)
+    .attr("class", "list-group-item")
+    .attr("data-team", teamId.teamId)
+    .style("--team-color", teamColors[teamId.name] || "#888")  // ← add this
+    .text(`${team.Constructor.name}`)
             .on("click", function () {
                 // console.log("Driver selected:", driverId);
                 handleTeamSelection(teamId);
@@ -238,23 +254,16 @@ function updateTeamList(standings) {
 
 }
 const handleDriverSelection = (driverObj) => {
+    if (!selectedDrivers) selectedDrivers = [];
 
-    // const driver = d3.select(this); // Read driver from attribute
-    if (!selectedDrivers) selectedDrivers = []; // Ensure it's always an array
+    if (!drivers.find(dri => dri.driverId === driverObj.driverId)) return;
 
-    // Check if the driver is valid before proceeding
-    // console.log("Drivers:", driverObj);
-
-    if (!drivers.find(dri => dri.driverId === driverObj.driverId)) {
-        console.error(`Invalid driver selected: ${driverObj}`);
-        return;
-    }
-
-    // Toggle selection
     if (selectedDrivers.some(d => d.driverId === driverObj.driverId)) {
         selectedDrivers = selectedDrivers.filter(d => d.driverId !== driverObj.driverId);
-    } else if (selectedDrivers.length < 8) {
-        selectedDrivers.push(driverObj);
+    } else {
+        const limit = currentTab === 'quali' ? 2 : 8;
+        if (selectedDrivers.length < limit) selectedDrivers.push(driverObj);
+        else if (currentTab === 'quali') selectedDrivers = [selectedDrivers[1], driverObj]; // swap oldest
     }
 
     d3.selectAll(".list-group-item")
@@ -263,12 +272,10 @@ const handleDriverSelection = (driverObj) => {
             return selectedDrivers.some(d => d.driverId.includes(elementDriverId));
         });
 
-    // Update chart if at least 2 drivers are selected
-    if (selectedDrivers.length >= 2) {
-        updateChart();
-    }
-    console.log(selectedDrivers);
-}
+    if (currentTab === 'race' && selectedDrivers.length >= 2) updateChart();
+    else if (currentTab === 'quali' && selectedDrivers.length === 2) renderQualiH2H(selectedDrivers);
+    pushState();
+};
 
 const handleTeamSelection = (teamObj) => {
     // const driver = d3.select(this); // Read driver from attribute
@@ -299,8 +306,9 @@ const handleTeamSelection = (teamObj) => {
     // Update chart if at least 2 drivers are selected
     if (selectedTeams.length >= 2) {
         updateTeamChart();
+        pushState(); 
     }
-    console.log(selectedTeams);
+    // console.log(selectedTeams);
 }
 
 // Available colors for different drivers
@@ -449,13 +457,13 @@ function updateChart() {
 
     if (selectedView === 'drivers') {
         const [driver1, driver2] = selectedDrivers;
-        console.log("Selected drivers:", driver1, driver2);
-        console.log(drivers.find(dri => dri.driverId === driver1.driverId))
+        // console.log("Selected drivers:", driver1, driver2);
+        // console.log(drivers.find(dri => dri.driverId === driver1.driverId))
         calculateDifferences(selectedDrivers)
     } else if (selectedView === 'teams') {
         const [team1, team2] = selectedTeams;
-        console.log("Selected teams:", team1, team2);
-        console.log(teams.find(team => team.teamId === team1.teamId))
+        // console.log("Selected teams:", team1, team2);
+        // console.log(teams.find(team => team.teamId === team1.teamId))
         calculateDifferences(selectedTeams)
     }
     // Pass the actual arrays of points, not strings
@@ -476,6 +484,7 @@ function updateTeamChart() {
 
 export const updateChartWithData = async (averagePoints, ...driversDiffs) => {
 
+    
     if (selectedView === 'drivers' && (!selectedDrivers || selectedDrivers.length < 2)) {
         console.warn("Please select at least two drivers to compare.");
         return;
@@ -651,32 +660,175 @@ export const updateChartWithData = async (averagePoints, ...driversDiffs) => {
         });
     } else if (selectedView === 'teams') {
         selectedTeams.forEach((team, i) => {
+            const color = getDriverColor({ driverId: team.teamId, team: team.name });
+
             svg.append("path")
                 .datum(driversDiffs[i])
                 .attr("class", "line")
                 .attr("fill", "none")
-                .attr("stroke", d => teamColors[team.name])
+                .attr("stroke", color)
                 .attr("stroke-width", 4)
                 .attr("d", lineGenerator);
 
             svg.append("text")
                 .attr("class", "legend")
-                .attr("x", 0 + 10)
+                .attr("x", 10)
                 .attr("y", 20 + i * 25)
-                .attr("fill", d => teamColors[team.name])
+                .attr("fill", color)
                 .text(`${team.name}`);
-        })
+        });
     }
+}
+
+
+export async function renderQualiH2H([driverA, driverB]) {
+    clearChart();
+
+
+
+    // Show loading state
+    svg.append("text")
+        .attr("class", "quali-h2h")
+        .attr("x", width / 2)
+        .attr("y", height / 2)
+        .attr("text-anchor", "middle")
+        .attr("fill", "#666")
+        .attr("font-family", "Barlow Condensed, sans-serif")
+        .attr("letter-spacing", "0.1em")
+        .attr("font-size", "13px")
+        .text("LOADING QUALIFYING DATA...");
+
+    const races = await fetchQualiForDrivers(selectedYear);
+
+    svg.selectAll(".quali-h2h").remove();
+
+    const h2h = buildH2H(races, driverA, driverB); // reuse from quali.js
+    const winsA = h2h.filter(r => r.winner === 'a').length;
+    const winsB = h2h.filter(r => r.winner === 'b').length;
+    const total = winsA + winsB || 1;
+
+    const colorA = getDriverColor(driverA);
+    const colorB = getDriverColor(driverB);
+
+    // ── Driver name labels ──────────────────────────────────
+    svg.append("text").attr("class", "quali-h2h")
+        .attr("x", width / 2 - 20).attr("y", 30)
+        .attr("text-anchor", "end")
+        .attr("fill", colorA)
+        .attr("font-family", "Barlow Condensed, sans-serif")
+        .attr("font-weight", 800).attr("font-size", "22px")
+        .attr("letter-spacing", "0.06em")
+        .text(driverA.familyName.toUpperCase());
+
+    svg.append("text").attr("class", "quali-h2h")
+        .attr("x", width / 2 + 20).attr("y", 30)
+        .attr("text-anchor", "start")
+        .attr("fill", colorB)
+        .attr("font-family", "Barlow Condensed, sans-serif")
+        .attr("font-weight", 800).attr("font-size", "22px")
+        .attr("letter-spacing", "0.06em")
+        .text(driverB.familyName.toUpperCase());
+
+    svg.append("text").attr("class", "quali-h2h")
+        .attr("x", width / 2).attr("y", 30)
+        .attr("text-anchor", "middle")
+        .attr("fill", "#555")
+        .attr("font-family", "Barlow Condensed, sans-serif")
+        .attr("font-size", "13px")
+        .text("VS");
+
+    // ── Score numbers ───────────────────────────────────────
+    svg.append("text").attr("class", "quali-h2h")
+        .attr("x", width / 2 - 20).attr("y", 65)
+        .attr("text-anchor", "end")
+        .attr("fill", colorA)
+        .attr("font-family", "Barlow Condensed, sans-serif")
+        .attr("font-weight", 800).attr("font-size", "42px")
+        .text(winsA);
+
+    svg.append("text").attr("class", "quali-h2h")
+        .attr("x", width / 2 + 20).attr("y", 65)
+        .attr("text-anchor", "start")
+        .attr("fill", colorB)
+        .attr("font-family", "Barlow Condensed, sans-serif")
+        .attr("font-weight", 800).attr("font-size", "42px")
+        .text(winsB);
+
+    // ── Score bar ───────────────────────────────────────────
+    const barY = 85;
+    const barH = 8;
+
+    svg.append("rect").attr("class", "quali-h2h")
+        .attr("x", 0).attr("y", barY)
+        .attr("width", width).attr("height", barH)
+        .attr("fill", "#1a1a1a");
+
+    svg.append("rect").attr("class", "quali-h2h")
+        .attr("x", 0).attr("y", barY)
+        .attr("width", (winsA / total) * width).attr("height", barH)
+        .attr("fill", colorA);
+
+    svg.append("rect").attr("class", "quali-h2h")
+        .attr("x", (winsA / total) * width).attr("y", barY)
+        .attr("width", (winsB / total) * width).attr("height", barH)
+        .attr("fill", colorB);
+
+    // ── Race cells ──────────────────────────────────────────
+    const cellW = 44;
+    const cellH = 36;
+    const cols = Math.floor(width / (cellW + 4));
+    const startY = barY + barH + 20;
+
+    h2h.forEach((race, idx) => {
+        const col = idx % cols;
+        const row = Math.floor(idx / cols);
+        const x = col * (cellW + 4);
+        const y = startY + row * (cellH + 4);
+
+        const winnerDriver = race.winner === 'a' ? driverA : race.winner === 'b' ? driverB : null;
+        const winColor = winnerDriver ? getDriverColor(winnerDriver) : '#2a2a2a';
+        const winCode = winnerDriver ? (winnerDriver.familyName.substring(0, 3).toUpperCase()) : '—';
+
+        // Cell background
+        svg.append("rect").attr("class", "quali-h2h")
+            .attr("x", x).attr("y", y)
+            .attr("width", cellW).attr("height", cellH)
+            .attr("fill", "#111")
+            .attr("stroke", race.winner ? winColor : "#222")
+            .attr("stroke-width", 1);
+
+        // Round label
+        svg.append("text").attr("class", "quali-h2h")
+            .attr("x", x + cellW / 2).attr("y", y + 12)
+            .attr("text-anchor", "middle")
+            .attr("fill", "#555")
+            .attr("font-family", "Barlow Condensed, sans-serif")
+            .attr("font-size", "9px")
+            .attr("letter-spacing", "0.06em")
+            .text(`R${race.round}`);
+
+        // Winner code
+        svg.append("text").attr("class", "quali-h2h")
+            .attr("x", x + cellW / 2).attr("y", y + 27)
+            .attr("text-anchor", "middle")
+            .attr("fill", winColor)
+            .attr("font-family", "Barlow Condensed, sans-serif")
+            .attr("font-weight", 700)
+            .attr("font-size", "13px")
+            .text(winCode);
+    });
 }
 
 document.getElementById("show-drivers").addEventListener("click", () => {
     selectedView = "drivers";
+    clearChart(); 
     fetchDriverStandings(selectedYear, selectedView);
     setActive("drivers");
 });
 
 document.getElementById("show-teams").addEventListener("click", () => {
     selectedView = "teams";
+    clearChart(); 
     fetchTeamStandings(selectedYear, selectedView);
     setActive("teams");
 });
@@ -686,32 +838,224 @@ function setActive(view) {
     document.getElementById("show-teams").classList.toggle("active", view === "teams");
 }
 
+// Tab state
+let currentTab = 'race'; // 'race' | 'quali'
 
-// Call API on page load
-fetchDriverStandings();
+document.querySelectorAll('.tab-btn').forEach(btn => {
+    btn.addEventListener('click', function () {
+        document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+        this.classList.add('active');
+        currentTab = this.dataset.tab;
+        pushState();
+
+        clearChart();
+
+        if (currentTab === 'race') {
+            // Restore race view
+            if (selectedView === 'drivers' && selectedDrivers.length >= 2) updateChart();
+            else if (selectedView === 'teams' && selectedTeams.length >= 2) updateTeamChart();
+        } else if (currentTab === 'quali') {
+            // Limit selection to 2, re-render quali if already 2 selected
+            if (selectedDrivers.length > 2) selectedDrivers = selectedDrivers.slice(0, 2);
+            if (selectedDrivers.length === 2) renderQualiH2H(selectedDrivers);
+            else clearChart();
+        }
+    });
+});
+
+// ── URL State Management ─────────────────────────────────────
+function pushState() {
+    const params = new URLSearchParams();
+
+    params.set('year', selectedYear);
+    params.set('view', selectedView);
+
+    if (selectedView === 'drivers' && selectedDrivers.length) {
+        params.set('selected', selectedDrivers.map(d => d.driverId).join(','));
+    } else if (selectedView === 'teams' && selectedTeams.length) {
+        params.set('selected', selectedTeams.map(t => t.teamId).join(','));
+    }
+
+    if (currentTab !== 'race') params.set('tab', currentTab);
+
+    window.history.replaceState({}, '', `?${params.toString()}`);
+}
+
+function readState() {
+    const params = new URLSearchParams(window.location.search);
+    return {
+        year:     params.get('year')     || 2025,
+        view:     params.get('view')     || 'drivers',
+        selected: params.get('selected') ? params.get('selected').split(',') : [],
+        tab:      params.get('tab')      || 'race',
+    };
+}
+
+async function restoreFromURL() {
+    const { year, view, selected, tab } = readState();
+
+    selectedYear = year;
+    selectedView = view;
+    currentTab = tab;
+
+    // Sync UI
+    document.querySelectorAll('.year-option').forEach(el => {
+        el.classList.toggle('current', el.innerHTML.trim() == year);
+    });
+    setActive(view);
+    document.querySelectorAll('.tab-btn').forEach(b => {
+        b.classList.toggle('active', b.dataset.tab === tab);
+    });
+
+    if (view === 'drivers') {
+        await fetchDriverStandings(year);
+        if (selected.length) {
+            selected.forEach(id => {
+                const driver = drivers.find(d => d.driverId === id);
+                if (driver) handleDriverSelection(driver);
+            });
+        }
+    } else if (view === 'teams') {
+        await fetchTeamStandings(year);
+        if (selected.length) {
+            selected.forEach(id => {
+                const team = drivers.find(d => d.teamId === id);
+                if (team) handleTeamSelection(team);
+            });
+        }
+    }
+}
+
+// ── Snapshot / Share Button ──────────────────────────────────
+document.getElementById('snapshot-btn').addEventListener('click', () => {
+    const svgEl = document.querySelector('#chart svg');
+    if (!svgEl) return;
+
+    // Clone so we don't mutate the live SVG
+    const clone = svgEl.cloneNode(true);
+
+    // ── 1. Inline all computed styles on every element ──────
+    const allEls = [clone, ...clone.querySelectorAll('*')];
+    const liveEls = [svgEl, ...svgEl.querySelectorAll('*')];
+
+    liveEls.forEach((liveEl, i) => {
+        const computed = window.getComputedStyle(liveEl);
+        const cloneEl = allEls[i];
+
+        // Properties that matter for SVG rendering
+        const props = [
+            'fill', 'stroke', 'stroke-width', 'opacity',
+            'font-family', 'font-size', 'font-weight',
+            'letter-spacing', 'text-anchor', 'dominant-baseline'
+        ];
+
+        props.forEach(prop => {
+            const val = computed.getPropertyValue(prop);
+            if (val) cloneEl.style[prop] = val;
+        });
+    });
+
+    // ── 2. Force-set text fills (CSS variables won't resolve in canvas) ──
+    clone.querySelectorAll('text').forEach((t, i) => {
+        const live = svgEl.querySelectorAll('text')[i];
+        const fill = window.getComputedStyle(live).fill;
+        // If fill is empty or 'none', default to white
+        t.setAttribute('fill', fill && fill !== 'none' ? fill : '#f0f0f0');
+
+        // Inline font explicitly
+        t.setAttribute('font-family', 'Arial, sans-serif'); // canvas-safe fallback
+    });
+
+    // ── 3. Resolve CSS variable colors on paths/rects ───────
+    clone.querySelectorAll('path, rect, circle, line').forEach((el, i) => {
+        const live = svgEl.querySelectorAll('path, rect, circle, line')[i];
+        if (!live) return;
+        const computed = window.getComputedStyle(live);
+        const stroke = computed.stroke;
+        const fill = computed.fill;
+        if (stroke) el.setAttribute('stroke', stroke);
+        if (fill) el.setAttribute('fill', fill);
+    });
+
+    // ── 4. Add background rect so canvas isn't transparent ──
+    const bg = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
+    bg.setAttribute('width', '100%');
+    bg.setAttribute('height', '100%');
+    bg.setAttribute('fill', '#080808');
+    clone.insertBefore(bg, clone.firstChild);
+
+    // ── 5. Serialize and render ──────────────────────────────
+    const svgData = new XMLSerializer().serializeToString(clone);
+    const svgBlob = new Blob([svgData], { type: 'image/svg+xml;charset=utf-8' });
+    const url = URL.createObjectURL(svgBlob);
+
+    const img = new Image();
+    img.onload = () => {
+        const watermarkH = 36;
+        const padding = 40;
+
+        const vb = svgEl.viewBox.baseVal;
+        const canvas = document.createElement('canvas');
+        canvas.width = vb.width || img.naturalWidth;
+        canvas.height = (vb.height || img.naturalHeight) + watermarkH;
+
+        const ctx = canvas.getContext('2d');
+
+        // Background
+        ctx.fillStyle = '#080808';
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+        // Chart image
+        ctx.drawImage(img, 0, 0, vb.width, vb.height);
+
+        // Watermark bar
+        const barY = canvas.height - watermarkH;
+        ctx.fillStyle = '#0f0f0f';
+        ctx.fillRect(0, barY, canvas.width, watermarkH);
+
+        // Red accent
+        ctx.fillStyle = '#E10600';
+        ctx.fillRect(0, barY, 3, watermarkH);
+
+        // Domain
+        ctx.font = 'bold 13px Arial, sans-serif';
+        ctx.fillStyle = '#f0f0f0';
+        ctx.fillText(window.location.hostname, padding, barY + 23);
+
+        // Filter label
+        const label = buildSnapshotLabel();
+        ctx.fillStyle = '#666666';
+        ctx.font = '12px Arial, sans-serif';
+        const labelW = ctx.measureText(label).width;
+        ctx.fillText(label, canvas.width - labelW - padding, barY + 23);
+
+        const link = document.createElement('a');
+        link.download = `f1-chart-${selectedYear}-${Date.now()}.png`;
+        link.href = canvas.toDataURL('image/png');
+        link.click();
+
+        URL.revokeObjectURL(url);
+    };
+
+    img.onerror = (e) => console.error('SVG render failed:', e);
+    img.src = url;
+});
+
+function buildSnapshotLabel() {
+    if (selectedView === 'drivers' && selectedDrivers.length) {
+        return selectedDrivers.map(d => d.familyName.toUpperCase()).join(' vs ') + ` · ${selectedYear}`;
+    } else if (selectedView === 'teams' && selectedTeams.length) {
+        return selectedTeams.map(t => t.name.toUpperCase()).join(' vs ') + ` · ${selectedYear}`;
+    }
+    return `F1 ${selectedYear}`;
+}
 
 
-// Initial chart (empty)
-updateChart();
-
-// // Add lines
-// svg.append("path")
-//     .datum(verDiff)
-//     .attr("fill", "none")
-//     .attr("stroke", "blue")
-//     .attr("stroke-width", 2)
-//     .attr("d", lineGenerator);
-
-// svg.append("path")
-//     .datum(perDiff)
-//     .attr("fill", "none")
-//     .attr("stroke", "yellow")
-//     .attr("stroke-width", 2)
-//     .attr("d", lineGenerator);
+restoreFromURL();
 
 // Update X-axis based on number of
 const updateXAxis = (numRaces) => {
-    console.log("Updating X-axis with", numRaces)
+    // console.log("Updating X-axis with", numRaces)
     // Update X-axis
     xScale.domain([1, numRaces]);
     svg.select(".x-axis")

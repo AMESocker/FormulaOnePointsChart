@@ -196,6 +196,7 @@ header h1 {
   color: var(--text-dim);
   padding: 6px 10px;
   border: 1px solid transparent;
+  border-radius: 0 !important;
   font-family: var(--font-display);
   font-weight: 600;
   font-size: 0.9rem;
@@ -213,10 +214,11 @@ header h1 {
 }
 
 .list-group-item.selected {
-  background: var(--red-dim);
-  border-color: var(--red);
+  background-color: color-mix(in srgb, var(--team-color) 20%, transparent);
+  border-color: var(--team-color);
   color: #fff;
   font-weight: 700;
+  border-top: 2px solid var(--team-color);
 }
 
 /* ── Year Selector Navbar ──────────────────────────────────── */
@@ -252,7 +254,23 @@ header h1 {
   border-bottom: 2px solid var(--red);
   background: transparent;
 }
+#snapshot-btn {
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 0.85rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  background: var(--red);
+  border: none;
+  color: #fff;
+  padding: 8px 20px;
+  cursor: pointer;
+  transition: background 0.15s ease;
+}
 
+#snapshot-btn:hover {
+  background: #b80400;
+}
 /* ── Chart Container ───────────────────────────────────────── */
 #chartContainer {
   display: flex;
