@@ -23,5 +23,7 @@ export const teamColors = {
 'Aston Martin'	:'#014f46ff',
 'Williams':	'#1459b9ff',
 'Sauber'	:'#00E701',
-'Haas F1 Team'	:'#9C9FA2'
+'Haas F1 Team'	:'#9C9FA2',
+'Cadillac F1 Team': '#626263',
+'Audi': '#915200',
 };
