@@ -3,6 +3,7 @@
 // TODO create a new page for qualifying head to head battles
 // TODO - add a toggle to switch between points and qualifying performance (e.g., average qualifying position vs average grid position)
 // Todo - In mobile view have years above drivers or teams.
+// Todo - Add delta lap gaps for each race the first driver is the comparison.
 //?Done reset labels when switching between different drivers
 //?Done add result numbers on the dots
 //?Done have x axis be with the chart box
@@ -26,6 +27,8 @@ Apply the retrieved height to the other element using element.style.height = hei
 import { getDriverStandings, getSeasonDetails, getRaceWinners } from './api.js';
 import { extractStandings, getCompletedRaces } from './helpers.js';
 import { fetchQualiForDrivers, buildH2H } from './quali.js';
+import { calculateDifferences } from './stats.js';
+
 
 async function fetchDriverStandings(year = 2025) {
     // Clear color caches so new year gets fresh team colors
@@ -56,11 +59,62 @@ async function fetchDriverStandings(year = 2025) {
         const completedRaces = getCompletedRaces(seasonData);
         // console.log("Completed Races:", completedRaces.length);
         updateXAxis(completedRaces.length);
+        renderRaceList(seasonData);
 
     } catch (error) {
         console.error("Error fetching F1 data:", error);
     }
 }
+
+// Instantiate once outside the function
+const raceGapChart = new RaceGapChart('#raceChart');
+
+function renderRaceList(seasonData) {
+    const races = seasonData.MRData.RaceTable.Races;
+    const container = document.getElementById('races');
+    container.innerHTML = '';
+
+    races.forEach(race => {
+        const el = document.createElement('li');
+        el.id = `race-${race.round}`;
+        el.dataset.round = race.round;
+        el.className = 'list-group-item';
+        el.textContent = race.raceName.substring(0, 3).toUpperCase();
+        el.title = race.raceName;
+        console.log(race)
+
+        el.addEventListener('click', function () {
+            const alreadySelected = this.classList.contains('current-race');
+
+            document.querySelectorAll('#races .list-group-item')
+                .forEach(r => r.classList.remove('current-race'));
+
+            if (alreadySelected) {
+                document.getElementById('chart').style.display = 'block';
+                document.getElementById('raceChart').style.display = 'none';
+            } else {
+                this.classList.add('current-race');
+                document.getElementById('chart').style.display = 'none';
+                document.getElementById('raceChart').style.display = 'block';
+
+                // Use selected drivers if any, otherwise all drivers
+                const driverIds = selectedDrivers.length >= 1
+                    ? selectedDrivers.map(d => d.driverId)
+                    : drivers.map(d => d.driverId);
+
+                raceGapChart.load({
+                    season: selectedYear,
+                    round: parseInt(race.round),
+                    driverIds,
+                });
+            }
+        });
+
+        container.appendChild(el);
+    });
+}
+
+
 
 async function fetchTeamStandings(year = 2025) {
     // Clear color caches so new year gets fresh team colors
@@ -97,7 +151,6 @@ async function fetchTeamStandings(year = 2025) {
     }
 }
 
-import { calculateDifferences } from './stats.js';
 
 
 document.querySelectorAll(".year-option").forEach(yearOption => {
@@ -111,6 +164,11 @@ document.querySelectorAll(".year-option").forEach(yearOption => {
         showLoadingMessage()
         clearChart();
         showLoadingMessage();
+
+        gtag('event', 'year_changed', {
+            year: clickedYear
+        });
+
         // console.log("Selected view:", selectedView);
         if (selectedView === 'drivers') {
             fetchDriverStandings(clickedYear); // Fetch new data
@@ -192,7 +250,7 @@ function getDriverColor(driver) {
 
     // Cache it
     driverColorMap[driver.driverId] = finalColor;
-    console.log(`Assigned color for ${driver.givenName} ${driver.familyName} (${team}):`, finalColor);
+    // console.log(`Assigned color for ${driver.givenName} ${driver.familyName} (${team}):`, finalColor);
     return finalColor;
 }
 
@@ -219,7 +277,7 @@ function updateDriverList(standings) {
         driverList.append("li")
             .attr("class", "list-group-item")
             .attr("data-driver", driverId.driverId)
-            .style("--team-color", getDriverColor(driverId)) 
+            .style("--team-color", getDriverColor(driverId))
             .text(`${driver.Driver.code}`)
             .on("click", function () {
                 // console.log("Driver selected:", driverId);
@@ -241,10 +299,10 @@ function updateTeamList(standings) {
             name: team.Constructor.name,
         }
         driverList.append("li")
-    .attr("class", "list-group-item")
-    .attr("data-team", teamId.teamId)
-    .style("--team-color", teamColors[teamId.name] || "#888")  // ← add this
-    .text(`${team.Constructor.name}`)
+            .attr("class", "list-group-item")
+            .attr("data-team", teamId.teamId)
+            .style("--team-color", teamColors[teamId.name] || "#888")  // ← add this
+            .text(`${team.Constructor.name}`)
             .on("click", function () {
                 // console.log("Driver selected:", driverId);
                 handleTeamSelection(teamId);
@@ -275,6 +333,14 @@ const handleDriverSelection = (driverObj) => {
     if (currentTab === 'race' && selectedDrivers.length >= 2) updateChart();
     else if (currentTab === 'quali' && selectedDrivers.length === 2) renderQualiH2H(selectedDrivers);
     pushState();
+
+    gtag('event', 'driver_selected', {
+        driver_id: driverObj.driverId,
+        driver_name: driverObj.familyName,
+        year: selectedYear,
+        total_selected: selectedDrivers.length
+    });
+
 };
 
 const handleTeamSelection = (teamObj) => {
@@ -306,7 +372,7 @@ const handleTeamSelection = (teamObj) => {
     // Update chart if at least 2 drivers are selected
     if (selectedTeams.length >= 2) {
         updateTeamChart();
-        pushState(); 
+        pushState();
     }
     // console.log(selectedTeams);
 }
@@ -484,7 +550,7 @@ function updateTeamChart() {
 
 export const updateChartWithData = async (averagePoints, ...driversDiffs) => {
 
-    
+
     if (selectedView === 'drivers' && (!selectedDrivers || selectedDrivers.length < 2)) {
         console.warn("Please select at least two drivers to compare.");
         return;
@@ -821,14 +887,14 @@ export async function renderQualiH2H([driverA, driverB]) {
 
 document.getElementById("show-drivers").addEventListener("click", () => {
     selectedView = "drivers";
-    clearChart(); 
+    clearChart();
     fetchDriverStandings(selectedYear, selectedView);
     setActive("drivers");
 });
 
 document.getElementById("show-teams").addEventListener("click", () => {
     selectedView = "teams";
-    clearChart(); 
+    clearChart();
     fetchTeamStandings(selectedYear, selectedView);
     setActive("teams");
 });
@@ -884,10 +950,10 @@ function pushState() {
 function readState() {
     const params = new URLSearchParams(window.location.search);
     return {
-        year:     params.get('year')     || 2025,
-        view:     params.get('view')     || 'drivers',
+        year: params.get('year') || 2025,
+        view: params.get('view') || 'drivers',
         selected: params.get('selected') ? params.get('selected').split(',') : [],
-        tab:      params.get('tab')      || 'race',
+        tab: params.get('tab') || 'race',
     };
 }
 
