@@ -4,26 +4,28 @@
    Sharp edges, condensed type, red as structure, dense data
    ============================================================ */
 
-@import url('https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;500;600;700;800&family=Barlow:wght@400;500;600&display=swap');
+@import url("https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;500;600;700;800&family=Barlow:wght@400;500;600&display=swap");
 
 /* ── Variables ─────────────────────────────────────────────── */
 :root {
-  --red:        #E10600;
-  --red-dim:    rgba(225, 6, 0, 0.15);
-  --bg:         #080808;
-  --surface:    #0f0f0f;
-  --surface-2:  #161616;
-  --border:     #242424;
-  --border-2:   #2e2e2e;
-  --text:       #f0f0f0;
+  --red: #e10600;
+  --red-dim: rgba(225, 6, 0, 0.15);
+  --bg: #080808;
+  --surface: #0f0f0f;
+  --surface-2: #161616;
+  --border: #242424;
+  --border-2: #2e2e2e;
+  --text: #f0f0f0;
   --text-muted: #666;
-  --text-dim:   #999;
-  --font-display: 'Barlow Condensed', sans-serif;
-  --font-body:    'Barlow', sans-serif;
+  --text-dim: #999;
+  --font-display: "Barlow Condensed", sans-serif;
+  --font-body: "Barlow", sans-serif;
 }
 
 /* ── Reset ─────────────────────────────────────────────────── */
-*, *::before, *::after {
+*,
+*::before,
+*::after {
   box-sizing: border-box;
   margin: 0;
   padding: 0;
@@ -41,7 +43,8 @@ body {
   background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.03'/%3E%3C/svg%3E");
 }
 
-h1, h2 {
+h1,
+h2 {
   font-family: var(--font-display);
   font-weight: 800;
   letter-spacing: 0.03em;
@@ -61,13 +64,13 @@ header {
   padding: 1.5rem 2rem 1.25rem;
   border-bottom: 1px solid var(--border);
   position: relative;
-  display: flex;        /* ADD THIS */
-  align-items: center;  /* ADD THIS */
-  gap: 1.5rem;          /* ADD THIS */
+  display: flex; /* ADD THIS */
+  align-items: center; /* ADD THIS */
+  gap: 1.5rem; /* ADD THIS */
 }
 
 header::after {
-  content: '';
+  content: "";
   position: absolute;
   bottom: 0;
   left: 0;
@@ -161,14 +164,18 @@ header h1 {
   margin-bottom: -1px; /* overlap the border-bottom of tab-nav */
 }
 
-.tab-btn:hover { color: var(--text); }
+.tab-btn:hover {
+  color: var(--text);
+}
 
 .tab-btn.active {
   color: #fff;
   border-bottom-color: var(--red);
 }
 
-.tab-panel { width: 100%; }
+.tab-panel {
+  width: 100%;
+}
 
 #quali-frame {
   width: 100%;
@@ -254,6 +261,32 @@ header h1 {
   border-bottom: 2px solid var(--red);
   background: transparent;
 }
+
+#share-btn {
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 0.78rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  background: transparent;
+  border: 1px solid var(--border-2);
+  color: var(--text-muted);
+  padding: 4px 14px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  margin-left: auto; /* pushes it to the right */
+}
+
+#share-btn:hover {
+  color: var(--text);
+  border-color: var(--text-muted);
+}
+
+#share-btn.copied {
+  color: #4caf50;
+  border-color: #4caf50;
+}
+
 #snapshot-btn {
   font-family: var(--font-display);
   font-weight: 700;
@@ -271,6 +304,30 @@ header h1 {
 #snapshot-btn:hover {
   background: #b80400;
 }
+#races {
+  display: flex;
+  flex-direction: row;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 3px;
+  width: 100%;
+  background-color: var(--surface);
+  padding: 0.5rem;
+}
+
+#races .list-group-item {
+  flex: 1;
+  text-align: center;
+  min-width: 42px;
+  font-size: 0.75rem;
+  letter-spacing: 0.06em;
+}
+
+#races .list-group-item.current-race {
+    color: #fff;
+    border-bottom: 2px solid var(--red);
+}
+
 /* ── Chart Container ───────────────────────────────────────── */
 #chartContainer {
   display: flex;
@@ -381,8 +438,13 @@ footer p {
 }
 
 @keyframes pulse {
-  0%, 100% { opacity: 0.4; }
-  50%       { opacity: 1; }
+  0%,
+  100% {
+    opacity: 0.4;
+  }
+  50% {
+    opacity: 1;
+  }
 }
 
 /* ── Responsive ────────────────────────────────────────────── */
@@ -396,7 +458,6 @@ footer p {
     padding: 1rem 1.25rem;
   }
 
-  
   header h1 {
     font-size: 1.5rem;
   }

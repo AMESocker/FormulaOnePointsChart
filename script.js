@@ -67,7 +67,7 @@ async function fetchDriverStandings(year = 2025) {
 }
 
 // Instantiate once outside the function
-const raceGapChart = new RaceGapChart('#raceChart');
+// const raceGapChart = new RaceGapChart('#raceChart');
 
 function renderRaceList(seasonData) {
     const races = seasonData.MRData.RaceTable.Races;
@@ -164,11 +164,6 @@ document.querySelectorAll(".year-option").forEach(yearOption => {
         showLoadingMessage()
         clearChart();
         showLoadingMessage();
-
-        gtag('event', 'year_changed', {
-            year: clickedYear
-        });
-
         // console.log("Selected view:", selectedView);
         if (selectedView === 'drivers') {
             fetchDriverStandings(clickedYear); // Fetch new data
@@ -183,6 +178,7 @@ function clearChart() {
     svg.selectAll(".line").remove();  // Remove previous lines
     svg.selectAll(".legend").remove(); // Remove legends
     svg.selectAll(".dot-group").remove();
+    svg.selectAll(".grid").remove();
 }
 
 
@@ -333,7 +329,7 @@ const handleDriverSelection = (driverObj) => {
     if (currentTab === 'race' && selectedDrivers.length >= 2) updateChart();
     else if (currentTab === 'quali' && selectedDrivers.length === 2) renderQualiH2H(selectedDrivers);
     pushState();
-
+    
     gtag('event', 'driver_selected', {
         driver_id: driverObj.driverId,
         driver_name: driverObj.familyName,
@@ -993,128 +989,155 @@ async function restoreFromURL() {
 }
 
 // ── Snapshot / Share Button ──────────────────────────────────
-document.getElementById('snapshot-btn').addEventListener('click', () => {
-    const svgEl = document.querySelector('#chart svg');
-    if (!svgEl) return;
+// document.getElementById('snapshot-btn').addEventListener('click', () => {
+//     const svgEl = document.querySelector('#chart svg');
+//     if (!svgEl) return;
 
-    // Clone so we don't mutate the live SVG
-    const clone = svgEl.cloneNode(true);
+//     // Clone so we don't mutate the live SVG
+//     const clone = svgEl.cloneNode(true);
 
-    // ── 1. Inline all computed styles on every element ──────
-    const allEls = [clone, ...clone.querySelectorAll('*')];
-    const liveEls = [svgEl, ...svgEl.querySelectorAll('*')];
+//     // ── 1. Inline all computed styles on every element ──────
+//     const allEls = [clone, ...clone.querySelectorAll('*')];
+//     const liveEls = [svgEl, ...svgEl.querySelectorAll('*')];
 
-    liveEls.forEach((liveEl, i) => {
-        const computed = window.getComputedStyle(liveEl);
-        const cloneEl = allEls[i];
+//     liveEls.forEach((liveEl, i) => {
+//         const computed = window.getComputedStyle(liveEl);
+//         const cloneEl = allEls[i];
 
-        // Properties that matter for SVG rendering
-        const props = [
-            'fill', 'stroke', 'stroke-width', 'opacity',
-            'font-family', 'font-size', 'font-weight',
-            'letter-spacing', 'text-anchor', 'dominant-baseline'
-        ];
+//         // Properties that matter for SVG rendering
+//         const props = [
+//             'fill', 'stroke', 'stroke-width', 'opacity',
+//             'font-family', 'font-size', 'font-weight',
+//             'letter-spacing', 'text-anchor', 'dominant-baseline'
+//         ];
 
-        props.forEach(prop => {
-            const val = computed.getPropertyValue(prop);
-            if (val) cloneEl.style[prop] = val;
-        });
+//         props.forEach(prop => {
+//             const val = computed.getPropertyValue(prop);
+//             if (val) cloneEl.style[prop] = val;
+//         });
+//     });
+
+//     // ── 2. Force-set text fills (CSS variables won't resolve in canvas) ──
+//     clone.querySelectorAll('text').forEach((t, i) => {
+//         const live = svgEl.querySelectorAll('text')[i];
+//         const fill = window.getComputedStyle(live).fill;
+//         // If fill is empty or 'none', default to white
+//         t.setAttribute('fill', fill && fill !== 'none' ? fill : '#f0f0f0');
+
+//         // Inline font explicitly
+//         t.setAttribute('font-family', 'Arial, sans-serif'); // canvas-safe fallback
+//     });
+
+//     // ── 3. Resolve CSS variable colors on paths/rects ───────
+//     clone.querySelectorAll('path, rect, circle, line').forEach((el, i) => {
+//         const live = svgEl.querySelectorAll('path, rect, circle, line')[i];
+//         if (!live) return;
+//         const computed = window.getComputedStyle(live);
+//         const stroke = computed.stroke;
+//         const fill = computed.fill;
+//         if (stroke) el.setAttribute('stroke', stroke);
+//         if (fill) el.setAttribute('fill', fill);
+//     });
+
+//     // ── 4. Add background rect so canvas isn't transparent ──
+//     const bg = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
+//     bg.setAttribute('width', '100%');
+//     bg.setAttribute('height', '100%');
+//     bg.setAttribute('fill', '#080808');
+//     clone.insertBefore(bg, clone.firstChild);
+
+//     // ── 5. Serialize and render ──────────────────────────────
+//     const svgData = new XMLSerializer().serializeToString(clone);
+//     const svgBlob = new Blob([svgData], { type: 'image/svg+xml;charset=utf-8' });
+//     const url = URL.createObjectURL(svgBlob);
+
+//     const img = new Image();
+//     img.onload = () => {
+//         const watermarkH = 36;
+//         const padding = 40;
+
+//         const vb = svgEl.viewBox.baseVal;
+//         const canvas = document.createElement('canvas');
+//         canvas.width = vb.width || img.naturalWidth;
+//         canvas.height = (vb.height || img.naturalHeight) + watermarkH;
+
+//         const ctx = canvas.getContext('2d');
+
+//         // Background
+//         ctx.fillStyle = '#080808';
+//         ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+//         // Chart image
+//         ctx.drawImage(img, 0, 0, vb.width, vb.height);
+
+//         // Watermark bar
+//         const barY = canvas.height - watermarkH;
+//         ctx.fillStyle = '#0f0f0f';
+//         ctx.fillRect(0, barY, canvas.width, watermarkH);
+
+//         // Red accent
+//         ctx.fillStyle = '#E10600';
+//         ctx.fillRect(0, barY, 3, watermarkH);
+
+//         // Domain
+//         ctx.font = 'bold 13px Arial, sans-serif';
+//         ctx.fillStyle = '#f0f0f0';
+//         ctx.fillText(window.location.hostname, padding, barY + 23);
+
+//         // Filter label
+//         const label = buildSnapshotLabel();
+//         ctx.fillStyle = '#666666';
+//         ctx.font = '12px Arial, sans-serif';
+//         const labelW = ctx.measureText(label).width;
+//         ctx.fillText(label, canvas.width - labelW - padding, barY + 23);
+
+//         const link = document.createElement('a');
+//         link.download = `f1-chart-${selectedYear}-${Date.now()}.png`;
+//         link.href = canvas.toDataURL('image/png');
+//         link.click();
+
+//         URL.revokeObjectURL(url);
+//     };
+
+//     img.onerror = (e) => console.error('SVG render failed:', e);
+//     img.src = url;
+// });
+document.getElementById('share-btn').addEventListener('click', () => {
+    // Make sure URL is up to date first
+    pushState();
+
+    const url = window.location.href;
+
+    navigator.clipboard.writeText(url).then(() => {
+        const btn = document.getElementById('share-btn');
+        btn.textContent = 'Copied ✓';
+        btn.classList.add('copied');
+
+        setTimeout(() => {
+            btn.textContent = 'Share ↗';
+            btn.classList.remove('copied');
+        }, 2000);
+    }).catch(() => {
+        // Fallback for browsers that block clipboard
+        prompt('Copy this link:', url);
     });
 
-    // ── 2. Force-set text fills (CSS variables won't resolve in canvas) ──
-    clone.querySelectorAll('text').forEach((t, i) => {
-        const live = svgEl.querySelectorAll('text')[i];
-        const fill = window.getComputedStyle(live).fill;
-        // If fill is empty or 'none', default to white
-        t.setAttribute('fill', fill && fill !== 'none' ? fill : '#f0f0f0');
-
-        // Inline font explicitly
-        t.setAttribute('font-family', 'Arial, sans-serif'); // canvas-safe fallback
-    });
-
-    // ── 3. Resolve CSS variable colors on paths/rects ───────
-    clone.querySelectorAll('path, rect, circle, line').forEach((el, i) => {
-        const live = svgEl.querySelectorAll('path, rect, circle, line')[i];
-        if (!live) return;
-        const computed = window.getComputedStyle(live);
-        const stroke = computed.stroke;
-        const fill = computed.fill;
-        if (stroke) el.setAttribute('stroke', stroke);
-        if (fill) el.setAttribute('fill', fill);
-    });
-
-    // ── 4. Add background rect so canvas isn't transparent ──
-    const bg = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
-    bg.setAttribute('width', '100%');
-    bg.setAttribute('height', '100%');
-    bg.setAttribute('fill', '#080808');
-    clone.insertBefore(bg, clone.firstChild);
-
-    // ── 5. Serialize and render ──────────────────────────────
-    const svgData = new XMLSerializer().serializeToString(clone);
-    const svgBlob = new Blob([svgData], { type: 'image/svg+xml;charset=utf-8' });
-    const url = URL.createObjectURL(svgBlob);
-
-    const img = new Image();
-    img.onload = () => {
-        const watermarkH = 36;
-        const padding = 40;
-
-        const vb = svgEl.viewBox.baseVal;
-        const canvas = document.createElement('canvas');
-        canvas.width = vb.width || img.naturalWidth;
-        canvas.height = (vb.height || img.naturalHeight) + watermarkH;
-
-        const ctx = canvas.getContext('2d');
-
-        // Background
-        ctx.fillStyle = '#080808';
-        ctx.fillRect(0, 0, canvas.width, canvas.height);
-
-        // Chart image
-        ctx.drawImage(img, 0, 0, vb.width, vb.height);
-
-        // Watermark bar
-        const barY = canvas.height - watermarkH;
-        ctx.fillStyle = '#0f0f0f';
-        ctx.fillRect(0, barY, canvas.width, watermarkH);
-
-        // Red accent
-        ctx.fillStyle = '#E10600';
-        ctx.fillRect(0, barY, 3, watermarkH);
-
-        // Domain
-        ctx.font = 'bold 13px Arial, sans-serif';
-        ctx.fillStyle = '#f0f0f0';
-        ctx.fillText(window.location.hostname, padding, barY + 23);
-
-        // Filter label
-        const label = buildSnapshotLabel();
-        ctx.fillStyle = '#666666';
-        ctx.font = '12px Arial, sans-serif';
-        const labelW = ctx.measureText(label).width;
-        ctx.fillText(label, canvas.width - labelW - padding, barY + 23);
-
-        const link = document.createElement('a');
-        link.download = `f1-chart-${selectedYear}-${Date.now()}.png`;
-        link.href = canvas.toDataURL('image/png');
-        link.click();
-
-        URL.revokeObjectURL(url);
-    };
-
-    img.onerror = (e) => console.error('SVG render failed:', e);
-    img.src = url;
+    // Track in GA
+    // gtag('event', 'share_clicked', {
+    //     url,
+    //     year: selectedYear,
+    //     view: selectedView,
+    //     drivers: selectedDrivers.map(d => d.driverId).join(',')
+    // });
 });
-
-function buildSnapshotLabel() {
-    if (selectedView === 'drivers' && selectedDrivers.length) {
-        return selectedDrivers.map(d => d.familyName.toUpperCase()).join(' vs ') + ` · ${selectedYear}`;
-    } else if (selectedView === 'teams' && selectedTeams.length) {
-        return selectedTeams.map(t => t.name.toUpperCase()).join(' vs ') + ` · ${selectedYear}`;
-    }
-    return `F1 ${selectedYear}`;
-}
+// function buildSnapshotLabel() {
+//     if (selectedView === 'drivers' && selectedDrivers.length) {
+//         return selectedDrivers.map(d => d.familyName.toUpperCase()).join(' vs ') + ` · ${selectedYear}`;
+//     } else if (selectedView === 'teams' && selectedTeams.length) {
+//         return selectedTeams.map(t => t.name.toUpperCase()).join(' vs ') + ` · ${selectedYear}`;
+//     }
+//     return `F1 ${selectedYear}`;
+// }
 
 
 restoreFromURL();
