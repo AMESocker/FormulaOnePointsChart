@@ -5,6 +5,15 @@
   <!-- Google tag (gtag.js) -->
   <script async src="https://www.googletagmanager.com/gtag/js?id=G-60MRX4QNEP"></script>
   <script>
+    if (window.location.hostname === 'localhost' ||
+      window.location.hostname === '127.0.0.1') {
+      window['ga-disable-G-60MRX4QNEP'] = true;
+    }
+
+    // Check if this is the site owner
+    if (localStorage.getItem('isOwner') === 'true') {
+      window['ga-disable-G-60MRX4QNEP'] = true;
+    }
     window.dataLayer = window.dataLayer || [];
     function gtag() { dataLayer.push(arguments); }
     gtag('js', new Date());
