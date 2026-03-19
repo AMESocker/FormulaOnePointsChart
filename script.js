@@ -28,7 +28,7 @@ import { getDriverStandings, getSeasonDetails, getRaceWinners } from './api.js';
 import { extractStandings, getCompletedRaces } from './helpers.js';
 import { fetchQualiForDrivers, buildH2H } from './quali.js';
 import { calculateDifferences } from './stats.js';
-
+import { teamColors, teamSecondaryColors } from './colors.js';
 
 async function fetchDriverStandings(year = 2025) {
     // Clear color caches so new year gets fresh team colors
@@ -189,7 +189,7 @@ function showLoadingMessage() {
     // .attr("class", "list-group-item text-center font-italic")
     // .text("Loading...");
 }
-import { teamColors } from './colors.js';
+
 
 // Map of team -> list of drivers (so we know the index for variation)
 const teamDriverMap = {};
@@ -315,9 +315,9 @@ const handleDriverSelection = (driverObj) => {
     if (selectedDrivers.some(d => d.driverId === driverObj.driverId)) {
         selectedDrivers = selectedDrivers.filter(d => d.driverId !== driverObj.driverId);
     } else {
-        const limit = currentTab === 'quali' ? 2 : 8;
+        const limit = currentTab === 'quali' ? 2 : 4;
         if (selectedDrivers.length < limit) selectedDrivers.push(driverObj);
-        else if (currentTab === 'quali') selectedDrivers = [selectedDrivers[1], driverObj]; // swap oldest
+        else  selectedDrivers = [...selectedDrivers.slice(1), driverObj]; // swap oldest
     }
 
     d3.selectAll(".list-group-item")
@@ -596,7 +596,31 @@ export const updateChartWithData = async (averagePoints, ...driversDiffs) => {
         // After drawing the line for each driver:
         selectedDrivers.forEach((driver, i) => {
             const diffData = driversDiffs[i];
+            const primaryColor = getDriverColor(driver);
+            const secondaryColor = teamSecondaryColors[driver.team] || '#333';
 
+            const offset = 2; // half of stroke-width 4
+
+            const lineGeneratorTop = d3.line()
+                .x((d, i) => xScale(i + 1))
+                .y(d => yScale(d) - offset)
+                .defined(d => d != null);
+
+            const lineGeneratorBottom = d3.line()
+                .x((d, i) => xScale(i + 1))
+                .y(d => yScale(d) + offset)
+                .defined(d => d != null);
+
+            // Secondary line (offset below)
+            svg.append("path")
+                .datum(diffData)
+                .attr("class", `line line-${driver.driverId}`)
+                .attr("fill", "none")
+                .attr("stroke", secondaryColor)
+                .attr("stroke-width", 4)  // wider so it peeks out behind the main line
+                .attr("opacity", 0.8)
+                .attr("pointer-events", "none")
+                .attr("d", lineGeneratorBottom);
             // Line
             svg.append("path")
                 .datum(diffData)
@@ -643,10 +667,10 @@ export const updateChartWithData = async (averagePoints, ...driversDiffs) => {
                 .datum(diffData)
                 .attr("class", `line line-${driver.driverId}`)
                 .attr("fill", "none")
-                .attr("stroke", getDriverColor(driver))
+                .attr("stroke", primaryColor)
                 .attr("stroke-width", 4)
                 .attr("pointer-events", "none")  // ← let the hit area above handle events
-                .attr("d", lineGenerator);
+                .attr("d", lineGeneratorTop);
             // Dots with finishing position labels
 
             if (window.innerWidth > 768) {
