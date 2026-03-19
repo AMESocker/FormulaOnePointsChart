@@ -1141,7 +1141,10 @@ document.getElementById('share-btn').addEventListener('click', () => {
 //     }
 //     return `F1 ${selectedYear}`;
 // }
-
+if (window.location.search.includes('owner=true')) {
+    localStorage.setItem('isOwner', 'true');
+    console.log('Owner mode enabled');
+}
 
 restoreFromURL();
 
