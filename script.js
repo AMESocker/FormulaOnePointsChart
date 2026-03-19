@@ -329,7 +329,7 @@ const handleDriverSelection = (driverObj) => {
     if (currentTab === 'race' && selectedDrivers.length >= 2) updateChart();
     else if (currentTab === 'quali' && selectedDrivers.length === 2) renderQualiH2H(selectedDrivers);
     pushState();
-    
+
     gtag('event', 'driver_selected', {
         driver_id: driverObj.driverId,
         driver_name: driverObj.familyName,
@@ -400,7 +400,8 @@ const svg = d3.select("#chart")
 
 // Resize function
 window.addEventListener("resize", () => {
-    d3.select("#chart").attr("width", Math.min(window.innerWidth * 0.9, 1148))
+    d3.select("#chart")
+        .attr("width", Math.min(window.innerWidth * 0.9, 1148))
         .attr("height", Math.min(window.innerHeight * 0.6, 470));
     updateChart();
 });
@@ -647,36 +648,38 @@ export const updateChartWithData = async (averagePoints, ...driversDiffs) => {
                 .attr("pointer-events", "none")  // ← let the hit area above handle events
                 .attr("d", lineGenerator);
             // Dots with finishing position labels
-            const dotGroup = svg.append("g")
-                .attr("class", `dot-group dot-group-${driver.driverId}`);
 
-            diffData.forEach((d, idx) => {
-                const cx = xScale(idx);
-                const cy = yScale(d);
-                const pos = driver.results?.[idx]?.position ?? "";
+            if (window.innerWidth > 768) {
+                const dotGroup = svg.append("g")
+                    .attr("class", `dot-group dot-group-${driver.driverId}`);
 
-                // Circle
-                dotGroup.append("circle")
-                    .attr("cx", xScale(idx + 1))
-                    .attr("cy", cy)
-                    .attr("r", 10)
-                    .attr("fill", pos === 1 ? "gold" : pos === 2 ? "silver" : pos === 3 ? "#cd7f32" : getDriverColor(driver))
-                    .attr("stroke", "#111")
-                    .attr("stroke-width", 1)
-                    .attr("pointer-events", "none");
+                diffData.forEach((d, idx) => {
+                    const cx = xScale(idx);
+                    const cy = yScale(d);
+                    const pos = driver.results?.[idx]?.position ?? "";
 
-                // Position number inside dot
-                dotGroup.append("text")
-                    .attr("x", xScale(idx + 1))
-                    .attr("y", cy + 4) // vertically center text in circle
-                    .attr("text-anchor", "middle")
-                    .attr("fill", "white")
-                    .attr("font-size", "9px")
-                    .attr("font-weight", "bold")
-                    .attr("pointer-events", "none")
-                    .text(pos);
-            });
+                    // Circle
+                    dotGroup.append("circle")
+                        .attr("cx", xScale(idx + 1))
+                        .attr("cy", cy)
+                        .attr("r", 10)
+                        .attr("fill", pos === 1 ? "gold" : pos === 2 ? "silver" : pos === 3 ? "#cd7f32" : getDriverColor(driver))
+                        .attr("stroke", "#111")
+                        .attr("stroke-width", 1)
+                        .attr("pointer-events", "none");
 
+                    // Position number inside dot
+                    dotGroup.append("text")
+                        .attr("x", xScale(idx + 1))
+                        .attr("y", cy + 4) // vertically center text in circle
+                        .attr("text-anchor", "middle")
+                        .attr("fill", "white")
+                        .attr("font-size", "9px")
+                        .attr("font-weight", "bold")
+                        .attr("pointer-events", "none")
+                        .text(pos);
+                });
+            }
             // Legend
             svg.append("text")
                 .attr("class", `legend legend-${driver.driverId}`)
