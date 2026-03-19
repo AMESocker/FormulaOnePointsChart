@@ -1,29 +1,33 @@
 // File: colors.js
-/*
+
 export const teamColors = {
-  "Red Bull": "#1E5BC6",
-  "Ferrari": "#E8002D",
-  "Mercedes": "#00D2BE",
-  "McLaren": "#FF8000",
-  "Aston Martin": "#006F62",
-  "Alpine F1 Team": "#0090FF",
-  "Williams": "#005AFF",
-  "RB F1 Team": "#6692FF", // Visa Cash App RB
-  "Sauber": "#00E701",
-  "Haas F1 Team": "#B6BABD",
+  'Mercedes': '#00D7B6',
+  'Ferrari': '#B30E1C',
+  'McLaren': '#F47600',
+  'Haas F1 Team': '#949CA0',
+  'Red Bull': '#0e346eff',
+  'RB F1 Team': '#96b5fcff',
+  'Alpine F1 Team': '#00A1E8',
+  'Audi': '#A71E00',
+  'Williams': '#1459b9ff',
+  'Cadillac F1 Team': '#818181',
+  'Aston Martin': '#166348',
+  'Sauber': '#00E701',
 };
-*/
-export const teamColors = {
-'Mercedes'	:'#00D7B6',
-'Red Bull' 	:'#0e346eff',
-'Ferrari'	:'#ED1131',
-'McLaren':	'#F47600',
-'Alpine F1 Team'	:'#00A1E8',
-'RB F1 Team':	'#96b5fcff',
-'Aston Martin'	:'#014f46ff',
-'Williams':	'#1459b9ff',
-'Sauber'	:'#00E701',
-'Haas F1 Team'	:'#9C9FA2',
-'Cadillac F1 Team': '#626263',
-'Audi': '#915200',
+
+export const teamSecondaryColors = {
+  'Mercedes': '#909090',
+  'Ferrari': '#DDDDDD',
+  'McLaren': '#686868',
+  'Haas F1 Team': '#EB1416',
+  'Red Bull': '#E0C245',
+  'RB F1 Team': '#D6D6D6',
+  'Alpine F1 Team': '#EE7CB5',
+  'Audi': '#D8D4D2',
+  'Racing Bulls': '#001a5c',
+  'Williams': '#157BAA',
+  'Sauber': '#003300',
+  'Cadillac F1 Team': '#131313',
+  'Aston Martin': '#00c89a',
+  'Kick Sauber': '#C1C23E',
 };
