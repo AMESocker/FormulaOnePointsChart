@@ -29,6 +29,7 @@ import { extractStandings, getCompletedRaces } from './helpers.js';
 import { fetchQualiForDrivers, buildH2H } from './quali.js';
 import { calculateDifferences } from './stats.js';
 import { teamColors, teamSecondaryColors } from './colors.js';
+import { RaceGapChart } from './raceGapChart.js';
 
 async function fetchDriverStandings(year = 2025) {
     // Clear color caches so new year gets fresh team colors
@@ -57,8 +58,7 @@ async function fetchDriverStandings(year = 2025) {
         // Fetch season details
         const seasonData = await getSeasonDetails(year);
         const completedRaces = getCompletedRaces(seasonData);
-        // console.log("Completed Races:", completedRaces.length);
-        updateXAxis(completedRaces.length);
+        updateXAxis(completedRaces.length, seasonData.MRData.RaceTable.Races);
         renderRaceList(seasonData);
 
     } catch (error) {
@@ -67,7 +67,7 @@ async function fetchDriverStandings(year = 2025) {
 }
 
 // Instantiate once outside the function
-// const raceGapChart = new RaceGapChart('#raceChart');
+const raceGapChart = new RaceGapChart('#raceChart');
 
 function renderRaceList(seasonData) {
     const races = seasonData.MRData.RaceTable.Races;
@@ -274,6 +274,7 @@ function updateDriverList(standings) {
             .attr("class", "list-group-item")
             .attr("data-driver", driverId.driverId)
             .style("--team-color", getDriverColor(driverId))
+            .style("--team-secondary-color", teamSecondaryColors[driverId.team] || "#333")
             .text(`${driver.Driver.code}`)
             .on("click", function () {
                 // console.log("Driver selected:", driverId);
@@ -668,7 +669,7 @@ export const updateChartWithData = async (averagePoints, ...driversDiffs) => {
                 .attr("class", `line line-${driver.driverId}`)
                 .attr("fill", "none")
                 .attr("stroke", primaryColor)
-                .attr("stroke-width", 4)
+                .attr("stroke-width", 6)
                 .attr("pointer-events", "none")  // ← let the hit area above handle events
                 .attr("d", lineGeneratorTop);
             // Dots with finishing position labels
@@ -1173,12 +1174,52 @@ if (window.location.search.includes('owner=true')) {
 restoreFromURL();
 
 // Update X-axis based on number of
-const updateXAxis = (numRaces) => {
-    // console.log("Updating X-axis with", numRaces)
-    // Update X-axis
+function updateXAxis(numRaces, races = []) {
     xScale.domain([1, numRaces]);
+
+    // Custom tick for each race
     svg.select(".x-axis")
         .transition().duration(500)
-        .call(d3.axisBottom(xScale).ticks(numRaces));
+        .call(
+            d3.axisBottom(xScale)
+                .ticks(numRaces)
+                .tickFormat((d, i) => {
+                    const race = races[d - 1]; // d is 1-based
+                    console.log("Race for tick:", race.raceName);
+                    return race ? race.raceName.substring(0, 3).toUpperCase() : d;
+                })
+        );
+
+    // Make ticks clickable
+    /*
+     svg.select(".x-axis")
+        .selectAll(".tick")
+        .style("cursor", "pointer")
+        .on("click", function(d) {
+            const race = races[d - 1];
+            if (!race) return;
+
+            svg.select(".x-axis").selectAll(".tick text")
+                .attr("fill", "var(--text-muted)")
+                .attr("font-weight", "normal");
+
+            d3.select(this).select("text")
+                .attr("fill", "#fff")
+                .attr("font-weight", "bold");
+
+            document.getElementById("chart").style.display = "none";
+            document.getElementById("raceChart").style.display = "block";
+
+            const driverIds = selectedDrivers.length >= 1
+                ? selectedDrivers.map(d => d.driverId)
+                : drivers.map(d => d.driverId);
+
+            raceGapChart.load({
+                season: selectedYear,
+                round: parseInt(race.round),
+                driverIds,
+            });
+        }); 
+        */
 }
 
