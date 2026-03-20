@@ -68,10 +68,10 @@ async function fetchDriverStandings(year = 2025) {
 
 // Instantiate once outside the function
 const raceGapChart = new RaceGapChart('#raceChart');
-
+/*
 function renderRaceList(seasonData) {
     const races = seasonData.MRData.RaceTable.Races;
-    const container = document.getElementById('races');
+    // const container = document.getElementById('races');
     container.innerHTML = '';
 
     races.forEach(race => {
@@ -113,7 +113,7 @@ function renderRaceList(seasonData) {
         container.appendChild(el);
     });
 }
-
+*/
 
 
 async function fetchTeamStandings(year = 2025) {
@@ -1185,7 +1185,7 @@ function updateXAxis(numRaces, races = []) {
                 .ticks(numRaces)
                 .tickFormat((d, i) => {
                     const race = races[d - 1]; // d is 1-based
-                    console.log("Race for tick:", race.raceName);
+                    // console.log("Race for tick:", race.raceName);
                     return race ? race.raceName.substring(0, 3).toUpperCase() : d;
                 })
         );
