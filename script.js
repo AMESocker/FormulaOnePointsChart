@@ -29,7 +29,7 @@ import { extractStandings, getCompletedRaces } from './helpers.js';
 import { fetchQualiForDrivers, buildH2H } from './quali.js';
 import { calculateDifferences } from './stats.js';
 import { teamColors, teamSecondaryColors } from './colors.js';
-import { RaceGapChart } from './raceGapChart.js';
+// import { RaceGapChart } from './raceGapChart.js';
 
 async function fetchDriverStandings(year = 2025) {
     // Clear color caches so new year gets fresh team colors
