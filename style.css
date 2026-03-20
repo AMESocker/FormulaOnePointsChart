@@ -221,11 +221,11 @@ header h1 {
 }
 
 .list-group-item.selected {
-  background-color: color-mix(in srgb, var(--team-color) 20%, transparent);
-  border-color: var(--team-color);
-  color: #fff;
+  background-color: color-mix(in srgb, var(--team-color) 50%, transparent);
+  border: 2px solid var(--team-secondary-color);
+  border-top: 2px solid var(--team-secondary-color);
   font-weight: 700;
-  border-top: 2px solid var(--team-color);
+  color: #fff;
 }
 
 /* ── Year Selector Navbar ──────────────────────────────────── */
