@@ -28,7 +28,7 @@ import { getDriverStandings, getSeasonDetails, getRaceWinners } from './api.js';
 import { extractStandings, getCompletedRaces } from './helpers.js';
 import { fetchQualiForDrivers, buildH2H } from './quali.js';
 import { calculateDifferences } from './stats.js';
-import { teamColors, teamSecondaryColors } from './colors.js';
+import { teamColors, teamSecondaryColors, getTeamColor, getTeamSecondaryColor } from './colors.js';
 import { RaceGapChart } from './raceGapChart.js';
 
 async function fetchDriverStandings(year = 2025) {
@@ -203,50 +203,22 @@ function getDriverColor(driver) {
     if (!teamDriverMap[team].includes(driver.driverId)) teamDriverMap[team].push(driver.driverId);
     if (driverColorMap[driver.driverId]) return driverColorMap[driver.driverId];
 
-    const baseHex = teamColors[team];
+    const baseHex = getTeamColor(team, selectedYear);
 
     if (!baseHex) {
         console.warn(`No color found for team: "${team}"`); // ← shows exact team name
         driverColorMap[driver.driverId] = "#f2ff00";
         return "#f2ff00";
     }
-    // Initialize team list if not present
-    if (!teamDriverMap[team]) {
-        teamDriverMap[team] = [];
-    }
-
-    // Add driver to team list if not present
-    if (!teamDriverMap[team].includes(driver.driverId)) {
-        teamDriverMap[team].push(driver.driverId);
-    }
-
-    // Return cached color if we’ve already generated one
-    if (driverColorMap[driver.driverId]) {
-        return driverColorMap[driver.driverId];
-    }
-
-    // Base color from your custom team color map
-    // const baseHex = teamColors[team] || "#eaff00"; // fallback gray
     const baseColor = d3.color(baseHex);
-
     const indexInTeam = teamDriverMap[team].indexOf(driver.driverId);
-
-    // Convert to HSL for easier adjustment
     const colorVariant = d3.hsl(baseColor);
-
-    // Generate variation — adjust lightness or saturation based on driver index
-    // First driver: base color, second: slightly darker/lighter, etc.
     const variation = 0.12 * indexInTeam;
     colorVariant.l = Math.max(0.3, Math.min(0.8, colorVariant.l - variation));
-
-    // Optionally tweak saturation too
     colorVariant.s = Math.max(0.4, Math.min(1, colorVariant.s + variation * 0.5));
 
     const finalColor = colorVariant.toString();
-
-    // Cache it
     driverColorMap[driver.driverId] = finalColor;
-    // console.log(`Assigned color for ${driver.givenName} ${driver.familyName} (${team}):`, finalColor);
     return finalColor;
 }
 
@@ -274,7 +246,7 @@ function updateDriverList(standings) {
             .attr("class", "list-group-item")
             .attr("data-driver", driverId.driverId)
             .style("--team-color", getDriverColor(driverId))
-            .style("--team-secondary-color", teamSecondaryColors[driverId.team] || "#333")
+            .style("--team-secondary-color", getTeamSecondaryColor(driverId.team, selectedYear) || "#333")
             .text(`${driver.Driver.code}`)
             .on("click", function () {
                 // console.log("Driver selected:", driverId);
@@ -298,7 +270,8 @@ function updateTeamList(standings) {
         driverList.append("li")
             .attr("class", "list-group-item")
             .attr("data-team", teamId.teamId)
-            .style("--team-color", teamColors[teamId.name] || "#888")  // ← add this
+            .style("--team-color", getTeamColor(teamId.name, selectedYear))
+            .style("--team-secondary-color", getTeamSecondaryColor(teamId.name, selectedYear))
             .text(`${team.Constructor.name}`)
             .on("click", function () {
                 // console.log("Driver selected:", driverId);
@@ -318,7 +291,7 @@ const handleDriverSelection = (driverObj) => {
     } else {
         const limit = currentTab === 'quali' ? 2 : 4;
         if (selectedDrivers.length < limit) selectedDrivers.push(driverObj);
-        else  selectedDrivers = [...selectedDrivers.slice(1), driverObj]; // swap oldest
+        else selectedDrivers = [...selectedDrivers.slice(1), driverObj]; // swap oldest
     }
 
     d3.selectAll(".list-group-item")
@@ -598,7 +571,7 @@ export const updateChartWithData = async (averagePoints, ...driversDiffs) => {
         selectedDrivers.forEach((driver, i) => {
             const diffData = driversDiffs[i];
             const primaryColor = getDriverColor(driver);
-            const secondaryColor = teamSecondaryColors[driver.team] || '#333';
+            const secondaryColor = getTeamSecondaryColor(driver.team, selectedYear);
 
             const offset = 2; // half of stroke-width 4
 
