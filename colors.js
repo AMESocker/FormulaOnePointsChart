@@ -16,15 +16,14 @@ export const teamColors = {
   'Sauber': '#00E701',
   'AlphaTauri': '#2B4562',
   'Alfa Romeo': '#a21d1d',
-  'Racing Point':'#f596c8',
-  'Renault':'#009368'
+  'Racing Point': '#f596c8',
+  'Renault': '#009368'
 };
 
 export const teamColorsByYear = {
   '2026': {
     'Mercedes': '#00D7B6',
     'Ferrari': '#B30E1C',
-    'McLaren': '#F47600',
     'Haas F1 Team': '#9f9f9f',
     'Red Bull': '#0e346eff',
     'RB F1 Team': '#96b5fcff',
@@ -37,6 +36,17 @@ export const teamColorsByYear = {
   '2023': {
     'AlphaTauri': '#2B4562',
     'Alfa Romeo': '#909090'
+  },
+  '2020': {
+    'Mercedes': '#00B1AA',
+    'Red Bull': '#1D40FF',
+    'Ferrari': '#BF0102',
+    'Racing Point': '#F596C8',
+    'Renault': '#FFF300',
+    'AlphaTauri': '#C8C8C8',
+    'Alfa Romeo': '#950101',
+    'Haas F1 Team': '#767978',
+    'Williams': '#0085F9'
   }
 };
 
@@ -69,6 +79,18 @@ export const teamSecondaryColorsByYear = {
   '2023': {
     'AlphaTauri': '#2B4562',
     'Alfa Romeo': '#909090'
+  },
+    '2020': {
+    'Mercedes': '#26252A',
+    'Red Bull': '#E71D2E',
+    'Ferrari': '#24201F',
+    'McLaren': '#0169AC',
+    'Racing Point': '#1055A6',
+    'Renault': '#383C3B',
+    'AlphaTauri': '#3C5168',
+    'Alfa Romeo': '#BCC1C5',
+    'Haas F1 Team': '#EA2430',
+    'Williams': '#C2CCD6'
   }
 }
 
