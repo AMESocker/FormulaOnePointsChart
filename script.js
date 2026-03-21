@@ -160,6 +160,7 @@ document.querySelectorAll(".year-option").forEach(yearOption => {
         // console.log("Selected year:", clickedYear);
         selectedYear = clickedYear; // Update selected year
         this.classList.add("current");
+        updatePageMeta();
         pushState();
         showLoadingMessage()
         clearChart();
@@ -303,7 +304,7 @@ const handleDriverSelection = (driverObj) => {
     if (currentTab === 'race' && selectedDrivers.length >= 2) updateChart();
     else if (currentTab === 'quali' && selectedDrivers.length === 2) renderQualiH2H(selectedDrivers);
     pushState();
-
+    updatePageMeta();
     gtag('event', 'driver_selected', {
         driver_id: driverObj.driverId,
         driver_name: driverObj.familyName,
@@ -987,6 +988,21 @@ async function restoreFromURL() {
             });
         }
     }
+}
+
+function updatePageMeta() {
+    const names = selectedDrivers.map(d => d.familyName).join(' vs ');
+    document.title = names
+        ? `${names} — F1 ${selectedYear} Points Chart`
+        : `F1 ${selectedYear} Points Comparison`;
+    
+    // Also update meta description
+    const desc = names
+        ? `Compare ${names} F1 points race by race in the ${selectedYear} season`
+        : `Interactive F1 points comparison chart for the ${selectedYear} season`;
+    
+    document.querySelector('meta[name="description"]')
+        ?.setAttribute('content', desc);
 }
 
 // ── Snapshot / Share Button ──────────────────────────────────
